@@ -49,6 +49,14 @@ HABER: "${topic}"
 - Her alan EN FAZLA 2 kısa cümle olsun. Mümkünse tek cümle.
 - Mobil ekranda hızlı okunmalı.
 
+DENGE DENETİMİ (yayınlamadan önce KENDİ KENDİNE yap):
+Yanıtı oluşturduktan sonra, son hali vermeden önce şunları zihninde kontrol et ve gerekirse düzelt:
+- İki taraf (destekleyen ve karşı) EŞİT GÜÇTE mi? Her iki argümanı da en güçlü, en makul haliyle yaz (steelman). Bir tarafı zayıf veya kolay çürütülür biçimde sunma.
+- İki argümanın uzunluğu ve tonu benzer mi?
+- Yanlı, küçümseyici, alaycı veya yönlendirici dil var mı? Varsa nötrle.
+- Özet ve uzman görüşü tarafsız mı? Uzman görüşü gizliden bir tarafı desteklemesin.
+Bu denetimi geçtikten sonra düzeltilmiş, dengeli son hali ver.
+
 Şunları üret:
 1. category: Şu listeden EN UYGUN olanı seç (sadece biri): ${CATEGORIES.join(", ")}
 2. title: Tarafsız, net başlık, soru biçiminde (max 70 karakter)

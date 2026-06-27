@@ -65,6 +65,7 @@ const fromRow = (r) => ({
   title: r.title,
   summary: r.summary,
   status: r.status,
+  source: r.source_url || "",
   for: { text: r.for_text || "" },
   against: { text: r.against_text || "" },
   expert: { author: r.expert_role || "Uzman Değerlendirmesi", text: r.expert_text || "" },
@@ -277,6 +278,11 @@ function SwipeDeck({ topics, loading }) {
               );
             })}
             <div style={S.voteTotal}>{counts ? `${total} kişi oyladı` : "Sonuç şu an gösterilemiyor"}</div>
+            {topic.source && (
+              <a href={topic.source} target="_blank" rel="noreferrer" style={{ ...S.sourceLink, display: "block", textAlign: "center", marginTop: 12, marginBottom: 0 }}>
+                📰 Kaynak haberi gör ↗
+              </a>
+            )}
             <button style={S.continueBtn} onClick={proceed}>Devam →</button>
           </div>
         </div>
@@ -327,6 +333,14 @@ function SwipeDeck({ topics, loading }) {
           <div style={S.categoryTag}>{topic.category}</div>
           <h1 style={S.cardTitle}>{topic.title}</h1>
           <p style={S.cardBody}>{topic.summary}</p>
+          {topic.source && (
+            <a href={topic.source} target="_blank" rel="noreferrer" style={S.sourceLink}
+              onMouseDown={e => e.stopPropagation()}
+              onTouchStart={e => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}>
+              📰 Kaynak haberi gör ↗
+            </a>
+          )}
           <div style={S.hints}>
             <span style={{ color: DIR.left.color }}>← Karşıyım</span>
             <span style={{ color: DIR.down.color }}>↓ Fikrim yok</span>
@@ -616,6 +630,7 @@ const S = {
   cardTitle: { fontSize: 18, fontWeight: 700, lineHeight: 1.38, color: "#F9FAFB", margin: "0 0 14px" },
   cardBody: { fontSize: 13, lineHeight: 1.7, color: "#9CA3AF", margin: "0 0 24px" },
   hints: { display: "flex", justifyContent: "space-between", fontSize: 10, opacity: 0.65, letterSpacing: "0.03em" },
+  sourceLink: { display: "inline-block", fontSize: 11, color: "#6EB5D8", textDecoration: "none", marginBottom: 18, opacity: 0.85, cursor: "pointer" },
   panel: { width: 104, background: "#0D1520", border: "1px solid", borderRadius: 16, padding: "14px 11px", flexShrink: 0, cursor: "pointer", transition: "opacity 0.12s, border-color 0.12s", boxSizing: "border-box" },
   panelLeft: { marginRight: -12, zIndex: 1 },
   panelRight: { marginLeft: -12, zIndex: 1 },

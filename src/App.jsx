@@ -220,37 +220,22 @@ function AdminPanel({ allTopics, reload, conn }) {
     if (!input.trim() || generating) return;
     setGenerating(true); setError(null); setDraft(null);
     try {
-      const prompt = `Sen tarafsız bir haber editörü asistanısın. Aşağıdaki gündem konusunu dengeli biçimde yapılandır.
-
-KONU: "${input.trim()}"
-KATEGORİ: ${category}
-
-Şunları üret:
-1. title: Tarafsız, net başlık (max 100 karakter)
-2. summary: Tarafsız özet, taraf tutmadan, 2-3 cümle
-3. forArgument: DESTEKLEYENLERİN en güçlü argümanı, 2-3 cümle
-4. againstArgument: KARŞI ÇIKANLARIN en güçlü argümanı, 2-3 cümle
-5. expertRole: Genel uzmanlık alanı tanımı (GERÇEK KİŞİ İSMİ KULLANMA, örn: "Anayasa Hukuku Akademisyeni")
-6. expertOpinion: O alandan tarafsız, dengeleyici değerlendirme, 2-3 cümle
-
-SADECE şu JSON formatında yanıt ver, başka hiçbir metin ekleme:
-{"title":"...","summary":"...","forArgument":"...","againstArgument":"...","expertRole":"...","expertOpinion":"..."}`;
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, messages: [{ role: "user", content: prompt }] }),
+        body: JSON.stringify({ topic: input.trim(), category }),
       });
-      const data = await response.json();
-      const textBlock = (data.content || []).find(b => b.type === "text");
-      if (!textBlock) throw new Error("no text");
-      const parsed = JSON.parse(textBlock.text.replace(/```json|```/g, "").trim());
+      const parsed = await response.json();
+      if (!response.ok) {
+        throw new Error(parsed.error || "Bilinmeyen hata");
+      }
       setDraft({
         category, title: parsed.title || "", summary: parsed.summary || "",
         for: { text: parsed.forArgument || "" }, against: { text: parsed.againstArgument || "" },
         expert: { author: parsed.expertRole || "Uzman Değerlendirmesi", text: parsed.expertOpinion || "" },
       });
     } catch (e) {
-      setError("Taslak oluşturulamadı (AI bağlantısı). Tekrar dene.");
+      setError("Taslak oluşturulamadı: " + e.message);
     } finally { setGenerating(false); }
   }
 

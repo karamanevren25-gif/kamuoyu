@@ -113,6 +113,39 @@ async function dbDelete(id) {
   if (!res.ok) throw new Error(`DELETE ${res.status}`);
 }
 
+/* ── Oylama ── */
+const DIR_TO_VOTE = { right: "for", left: "against", down: "neutral" };
+
+function getVoterId() {
+  try {
+    let id = localStorage.getItem("kamuoyu_voter");
+    if (!id) {
+      id = "v_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem("kamuoyu_voter", id);
+    }
+    return id;
+  } catch (e) {
+    return "v_" + Math.random().toString(36).slice(2);
+  }
+}
+
+async function castVote(topicId, voterId, direction) {
+  const res = await fetch(`${REST}/rpc/cast_vote`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ p_topic_id: topicId, p_voter_id: voterId, p_direction: direction }),
+  });
+  if (!res.ok) throw new Error(`VOTE ${res.status}`);
+  const rows = await res.json();
+  const r = Array.isArray(rows) ? rows[0] : rows;
+  return {
+    for: Number(r.for_count) || 0,
+    against: Number(r.against_count) || 0,
+    neutral: Number(r.neutral_count) || 0,
+    alreadyVoted: !!r.already_voted,
+  };
+}
+
 const CATEGORIES = ["ANAYASA", "EKONOMİ", "EĞİTİM", "SAĞLIK", "DIŞ POLİTİKA", "ÇEVRE", "TEKNOLOJİ", "DİĞER"];
 const DIR = {
   right: { label: "DESTEKLE", color: "#4CAF7D", sign: "✓" },
@@ -136,10 +169,12 @@ function SwipeDeck({ topics, loading }) {
   const [done, setDone] = useState(false);
   const [expertOpen, setExpertOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(null);
+  const [voted, setVoted] = useState(null); // { dir, counts } — oy sonrası sonuç ekranı
   const flying = useRef(false);
   const start = useRef({ x: 0, y: 0 });
+  const voterId = useRef(getVoterId());
 
-  useEffect(() => { setIdx(0); setHistory([]); setDone(false); }, [topics]);
+  useEffect(() => { setIdx(0); setHistory([]); setDone(false); setVoted(null); }, [topics]);
 
   const topic = topics[idx];
   const getDir = (x, y) => {
@@ -147,7 +182,7 @@ function SwipeDeck({ topics, loading }) {
     if (Math.abs(x) > 35) return x > 0 ? "right" : "left";
     return null;
   };
-  const onStart = (cx, cy) => { if (flying.current) return; start.current = { x: cx, y: cy }; setDragging(true); setDrag({ x: 0, y: 0 }); setPanelOpen(null); setExpertOpen(false); };
+  const onStart = (cx, cy) => { if (flying.current || voted) return; start.current = { x: cx, y: cy }; setDragging(true); setDrag({ x: 0, y: 0 }); setPanelOpen(null); setExpertOpen(false); };
   const onMove = (cx, cy) => { if (!dragging || flying.current) return; const x = cx - start.current.x, y = cy - start.current.y; setDrag({ x, y }); setSwipeDir(getDir(x, y)); };
   const onEnd = () => {
     if (!dragging) return;
@@ -158,13 +193,21 @@ function SwipeDeck({ topics, loading }) {
   };
   const commit = (dir) => {
     flying.current = true;
-    setHistory(h => [...h, { title: topic.title, dir }]);
     setDrag({ x: dir === "right" ? 500 : dir === "left" ? -500 : 0, y: dir === "down" ? 500 : 0 });
-    setTimeout(() => {
-      flying.current = false;
-      if (idx + 1 >= topics.length) setDone(true); else setIdx(i => i + 1);
-      setDrag({ x: 0, y: 0 }); setSwipeDir(null);
-    }, 380);
+    // Oyu kaydet, sonucu al
+    castVote(topic.id, voterId.current, DIR_TO_VOTE[dir])
+      .then((counts) => {
+        setTimeout(() => { flying.current = false; setVoted({ dir, counts }); setDrag({ x: 0, y: 0 }); setSwipeDir(null); }, 380);
+      })
+      .catch(() => {
+        // Oy kaydedilemese bile sonucu (en azından kendi oyunu) göster, akışı durdurma
+        setTimeout(() => { flying.current = false; setVoted({ dir, counts: null }); setDrag({ x: 0, y: 0 }); setSwipeDir(null); }, 380);
+      });
+  };
+  const proceed = () => {
+    setHistory(h => [...h, { title: topic.title, dir: voted.dir }]);
+    setVoted(null);
+    if (idx + 1 >= topics.length) setDone(true); else setIdx(i => i + 1);
   };
 
   if (loading) return <div style={S.loading}>Konular yükleniyor…</div>;
@@ -190,7 +233,57 @@ function SwipeDeck({ topics, loading }) {
             <strong style={{ color: "#F9FAFB", fontSize: 18 }}>{c[d]}</strong>
           </div>
         ))}
-        <button style={S.resetBtn} onClick={() => { setIdx(0); setHistory([]); setDone(false); }}>Tekrar Başla</button>
+        <button style={S.resetBtn} onClick={() => { setIdx(0); setHistory([]); setDone(false); setVoted(null); }}>Tekrar Başla</button>
+      </div>
+    );
+  }
+
+  /* ── OY SONRASI SONUÇ EKRANI ── */
+  if (voted) {
+    const counts = voted.counts;
+    const total = counts ? counts.for + counts.against + counts.neutral : 0;
+    const pct = (n) => (total ? Math.round((n / total) * 100) : 0);
+    const rows = [
+      { key: "for", dir: "right", value: counts ? counts.for : 0 },
+      { key: "against", dir: "left", value: counts ? counts.against : 0 },
+      { key: "neutral", dir: "down", value: counts ? counts.neutral : 0 },
+    ];
+    const myVote = DIR_TO_VOTE[voted.dir];
+    return (
+      <div style={S.deckRoot}>
+        <div style={S.expertBar}>
+          <div style={S.expertLabel}><span style={S.expertIcon}>↑</span> UZMAN GÖRÜŞÜ · <span style={S.expertAuthor}>{topic.expert.author}</span></div>
+        </div>
+        <div style={S.arena}>
+          <div style={{ ...S.card, cursor: "default" }}>
+            <div style={S.categoryTag}>{topic.category}</div>
+            <h1 style={{ ...S.cardTitle, marginBottom: 18 }}>{topic.title}</h1>
+            <div style={S.voteResultLabel}>{counts ? "Sonuçlar" : "Senin oyun kaydedildi"}</div>
+            {rows.map((r) => {
+              const isMine = r.key === myVote;
+              const p = pct(r.value);
+              return (
+                <div key={r.key} style={{ marginBottom: 12 }}>
+                  <div style={S.voteRowTop}>
+                    <span style={{ color: DIR[r.dir].color, fontWeight: isMine ? 800 : 600 }}>
+                      {DIR[r.dir].sign} {DIR[r.dir].label} {isMine && <span style={S.youTag}>· SEN</span>}
+                    </span>
+                    <span style={{ color: "#F9FAFB", fontWeight: 700 }}>{counts ? `%${p}` : (isMine ? "✓" : "—")}</span>
+                  </div>
+                  <div style={S.voteBarBg}>
+                    <div style={{ ...S.voteBarFill, width: counts ? `${p}%` : (isMine ? "100%" : "0%"), background: DIR[r.dir].color, opacity: isMine ? 1 : 0.55 }} />
+                  </div>
+                </div>
+              );
+            })}
+            <div style={S.voteTotal}>{counts ? `${total} kişi oyladı` : "Sonuç şu an gösterilemiyor"}</div>
+            <button style={S.continueBtn} onClick={proceed}>Devam →</button>
+          </div>
+        </div>
+        <div style={S.footer}>
+          <div style={S.bar}><div style={{ ...S.fill, width: `${((idx + 1) / topics.length) * 100}%` }} /></div>
+          <div style={S.counter}>{idx + 1} / {topics.length} konu</div>
+        </div>
       </div>
     );
   }
@@ -538,6 +631,14 @@ const S = {
   resultHeading: { fontSize: 20, fontWeight: 700, color: "#F9FAFB", textAlign: "center", margin: "0 0 24px" },
   resultRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", fontSize: 13, borderBottom: "1px solid rgba(255,255,255,0.06)" },
   resetBtn: { marginTop: 24, width: "100%", padding: "13px", background: "linear-gradient(135deg, #1E3A5F, #2563EB)", color: "#F0EDE8", border: "none", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: "0.05em" },
+
+  voteResultLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "#6B7280", textTransform: "uppercase", marginBottom: 16 },
+  voteRowTop: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, marginBottom: 6 },
+  youTag: { fontSize: 9, color: "#8DBBF5", letterSpacing: "0.08em" },
+  voteBarBg: { height: 8, background: "rgba(255,255,255,0.06)", borderRadius: 5, overflow: "hidden" },
+  voteBarFill: { height: "100%", borderRadius: 5, transition: "width 0.6s cubic-bezier(0.22,1,0.36,1)" },
+  voteTotal: { fontSize: 11, color: "#4B5563", textAlign: "center", marginTop: 16, letterSpacing: "0.04em" },
+  continueBtn: { marginTop: 18, width: "100%", padding: "13px", background: "linear-gradient(135deg, #1E3A5F, #2563EB)", color: "#F0EDE8", border: "none", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: "0.05em" },
 
   adminRoot: { width: "100%", maxWidth: 480, padding: "8px 18px 40px", boxSizing: "border-box" },
   connBar: { fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", padding: "8px 14px", border: "1px solid", borderRadius: 10, marginBottom: 14, textAlign: "center" },

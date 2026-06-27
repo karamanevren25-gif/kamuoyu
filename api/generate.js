@@ -19,18 +19,24 @@ export default async function handler(req, res) {
     return;
   }
 
-  const prompt = `Sen tarafsız bir haber editörü asistanısın. Aşağıdaki gündem konusunu dengeli biçimde yapılandır.
+  const prompt = `Sen tarafsız bir haber editörü asistanısın. Aşağıdaki gündem konusunu dengeli ve KISA biçimde yapılandır.
 
 KONU: "${topic.trim()}"
 KATEGORİ: ${category || "DİĞER"}
 
+ÜSLUP KURALLARI (çok önemli):
+- Kısa, net, yalın cümleler kur. Gereksiz sıfat ve dolgu kelime kullanma.
+- Her alan EN FAZLA 2 kısa cümle olsun. Mümkünse tek cümle.
+- Akıcı, doğrudan ve anlaşılır yaz. Karmaşık, uzun cümlelerden kaçın.
+- Mobil ekranda hızlı okunmalı.
+
 Şunları üret:
-1. title: Tarafsız, net başlık (max 100 karakter)
-2. summary: Tarafsız özet, taraf tutmadan, 2-3 cümle
-3. forArgument: DESTEKLEYENLERİN en güçlü argümanı, 2-3 cümle
-4. againstArgument: KARŞI ÇIKANLARIN en güçlü argümanı, 2-3 cümle
-5. expertRole: Genel uzmanlık alanı tanımı (GERÇEK KİŞİ İSMİ KULLANMA, örn: "Anayasa Hukuku Akademisyeni")
-6. expertOpinion: O alandan tarafsız, dengeleyici değerlendirme, 2-3 cümle
+1. title: Tarafsız, net başlık, soru biçiminde (max 70 karakter)
+2. summary: Konunun özü, tarafsız, en fazla 2 kısa cümle
+3. forArgument: DESTEKLEYENLERİN en güçlü argümanı, en fazla 2 kısa cümle
+4. againstArgument: KARŞI ÇIKANLARIN en güçlü argümanı, en fazla 2 kısa cümle
+5. expertRole: Genel uzmanlık alanı (GERÇEK KİŞİ İSMİ KULLANMA, örn: "Anayasa Hukuku Akademisyeni")
+6. expertOpinion: Tarafsız, dengeleyici değerlendirme, en fazla 2 kısa cümle
 
 SADECE şu JSON formatında yanıt ver, başka hiçbir metin ekleme:
 {"title":"...","summary":"...","forArgument":"...","againstArgument":"...","expertRole":"...","expertOpinion":"..."}`;

@@ -30,6 +30,14 @@ KATEGORİ: ${category || "DİĞER"}
 - Akıcı, doğrudan ve anlaşılır yaz. Karmaşık, uzun cümlelerden kaçın.
 - Mobil ekranda hızlı okunmalı.
 
+DENGE DENETİMİ (yayınlamadan önce KENDİ KENDİNE yap):
+Yanıtı oluşturduktan sonra, son hali vermeden önce şunları zihninde kontrol et ve gerekirse düzelt:
+- İki taraf (destekleyen ve karşı) EŞİT GÜÇTE mi? Her iki argümanı da en güçlü, en makul haliyle yaz (steelman). Bir tarafı zayıf, gülünç veya kolay çürütülür biçimde sunma.
+- İki argümanın uzunluğu ve tonu benzer mi? Biri uzun ve ikna edici, diğeri kısa ve güçsüz olmasın.
+- Yanlı, küçümseyici, alaycı veya yönlendirici dil var mı? Varsa nötrle.
+- Özet ve uzman görüşü tarafsız mı? Uzman görüşü gizliden bir tarafı desteklemesin; gerçekten dengeleyici olsun.
+Bu denetimi geçtikten sonra düzeltilmiş, dengeli son hali ver.
+
 Şunları üret:
 1. title: Tarafsız, net başlık, soru biçiminde (max 70 karakter)
 2. summary: Konunun özü, tarafsız, en fazla 2 kısa cümle

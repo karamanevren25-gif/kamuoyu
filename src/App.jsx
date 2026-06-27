@@ -4,11 +4,59 @@ import { useState, useEffect, useRef } from "react";
 const SUPABASE_URL = "https://mzfnafgmlutucxnpuuzo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_BdT_E38q0e2Ieb5lrDiUVA_kksMkRhv";
 const REST = `${SUPABASE_URL}/rest/v1`;
-const HEADERS = {
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
-  "Content-Type": "application/json",
-};
+const AUTH = `${SUPABASE_URL}/auth/v1`;
+
+// Giriş yapılınca buraya yöneticinin oturum anahtarı (token) yazılır.
+// Yoksa genel (publishable) anahtar kullanılır — sadece yayındakiler okunabilir.
+let currentToken = null;
+
+function authHeaders() {
+  return {
+    apikey: SUPABASE_KEY,
+    Authorization: `Bearer ${currentToken || SUPABASE_KEY}`,
+    "Content-Type": "application/json",
+  };
+}
+
+/* ── Giriş / Oturum işlemleri ── */
+async function signIn(email, password) {
+  const res = await fetch(`${AUTH}/token?grant_type=password`, {
+    method: "POST",
+    headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error_description || data.msg || "Giriş başarısız");
+  currentToken = data.access_token;
+  try { localStorage.setItem("kamuoyu_refresh", data.refresh_token); } catch (e) {}
+  return data.user;
+}
+
+async function restoreSession() {
+  let refresh = null;
+  try { refresh = localStorage.getItem("kamuoyu_refresh"); } catch (e) {}
+  if (!refresh) return null;
+  try {
+    const res = await fetch(`${AUTH}/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refresh }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error("oturum süresi dolmuş");
+    currentToken = data.access_token;
+    try { localStorage.setItem("kamuoyu_refresh", data.refresh_token); } catch (e) {}
+    return data.user;
+  } catch (e) {
+    try { localStorage.removeItem("kamuoyu_refresh"); } catch (e2) {}
+    return null;
+  }
+}
+
+function signOut() {
+  currentToken = null;
+  try { localStorage.removeItem("kamuoyu_refresh"); } catch (e) {}
+}
 
 // Veritabanı satırını arayüz biçimine çevir
 const fromRow = (r) => ({
@@ -26,7 +74,7 @@ async function dbGet(status) {
   const url = status
     ? `${REST}/topics?status=eq.${status}&select=*&order=created_at.desc`
     : `${REST}/topics?select=*&order=created_at.desc`;
-  const res = await fetch(url, { headers: HEADERS });
+  const res = await fetch(url, { headers: authHeaders() });
   if (!res.ok) throw new Error(`GET ${res.status}`);
   return (await res.json()).map(fromRow);
 }
@@ -44,7 +92,7 @@ async function dbInsert(topic) {
   };
   const res = await fetch(`${REST}/topics`, {
     method: "POST",
-    headers: { ...HEADERS, Prefer: "return=representation" },
+    headers: { ...authHeaders(), Prefer: "return=representation" },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`INSERT ${res.status}`);
@@ -54,14 +102,14 @@ async function dbInsert(topic) {
 async function dbUpdateStatus(id, status) {
   const res = await fetch(`${REST}/topics?id=eq.${id}`, {
     method: "PATCH",
-    headers: { ...HEADERS, Prefer: "return=representation" },
+    headers: { ...authHeaders(), Prefer: "return=representation" },
     body: JSON.stringify({ status }),
   });
   if (!res.ok) throw new Error(`UPDATE ${res.status}`);
 }
 
 async function dbDelete(id) {
-  const res = await fetch(`${REST}/topics?id=eq.${id}`, { method: "DELETE", headers: HEADERS });
+  const res = await fetch(`${REST}/topics?id=eq.${id}`, { method: "DELETE", headers: authHeaders() });
   if (!res.ok) throw new Error(`DELETE ${res.status}`);
 }
 
@@ -350,12 +398,52 @@ function AdminPanel({ allTopics, reload, conn }) {
   );
 }
 
+/* ════════ GİRİŞ FORMU ════════ */
+function LoginForm({ onSuccess }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function submit() {
+    if (!email.trim() || !password || busy) return;
+    setBusy(true); setError(null);
+    try {
+      const user = await signIn(email.trim(), password);
+      onSuccess(user);
+    } catch (e) {
+      setError(e.message || "Giriş başarısız");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div style={S.adminRoot}>
+      <div style={S.adminSection}>
+        <label style={S.label}>🔒 Yönetici Girişi</label>
+        <p style={S.helperNote}>Bu alan yalnızca yöneticiye açıktır. İçerik eklemek/onaylamak için giriş yap.</p>
+        <input style={{ ...S.textarea, marginTop: 12 }} type="email" placeholder="E-posta" value={email}
+          onChange={e => setEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} />
+        <input style={{ ...S.textarea, marginTop: 10 }} type="password" placeholder="Şifre" value={password}
+          onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} />
+        <button style={{ ...S.btn, ...S.btnPrimary, marginTop: 12, width: "100%", opacity: busy ? 0.6 : 1 }}
+          disabled={busy} onClick={submit}>
+          {busy ? "Giriş yapılıyor…" : "Giriş Yap"}
+        </button>
+        {error && <p style={S.errorText}>{error}</p>}
+      </div>
+    </div>
+  );
+}
+
 /* ════════ APP ROOT ════════ */
 export default function App() {
-  const [mode, setMode] = useState("admin");
+  const [mode, setMode] = useState("user");
   const [allTopics, setAllTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [conn, setConn] = useState("loading");
+  const [session, setSession] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   async function reload() {
     setLoading(true);
@@ -368,7 +456,26 @@ export default function App() {
     } finally { setLoading(false); }
   }
 
-  useEffect(() => { reload(); }, []);
+  useEffect(() => {
+    (async () => {
+      const user = await restoreSession();
+      if (user) setSession(user);
+      setAuthChecked(true);
+      await reload();
+    })();
+  }, []);
+
+  function handleLogout() {
+    signOut();
+    setSession(null);
+    setMode("user");
+    reload();
+  }
+
+  async function handleLoginSuccess(user) {
+    setSession(user);
+    await reload();
+  }
 
   const liveTopics = allTopics.filter(t => t.status === "live");
 
@@ -378,9 +485,16 @@ export default function App() {
       <div style={S.switcher}>
         <button style={{ ...S.switchBtn, ...(mode === "admin" ? S.switchBtnActive : {}) }} onClick={() => setMode("admin")}>🛠 Yönetici</button>
         <button style={{ ...S.switchBtn, ...(mode === "user" ? S.switchBtnActive : {}) }} onClick={() => setMode("user")}>📱 Önizleme</button>
+        {session && mode === "admin" && (
+          <button style={{ ...S.switchBtn, color: "#F09797", borderColor: "rgba(224,90,90,0.3)" }} onClick={handleLogout}>Çıkış</button>
+        )}
       </div>
       {mode === "admin"
-        ? <AdminPanel allTopics={allTopics} reload={reload} conn={conn} />
+        ? (!authChecked
+            ? <div style={S.loading}>Kontrol ediliyor…</div>
+            : session
+              ? <AdminPanel allTopics={allTopics} reload={reload} conn={conn} />
+              : <LoginForm onSuccess={handleLoginSuccess} />)
         : <SwipeDeck topics={liveTopics} loading={loading} />}
     </div>
   );

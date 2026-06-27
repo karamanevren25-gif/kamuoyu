@@ -40,20 +40,25 @@ function parseItems(xml, limit) {
 }
 
 async function generateCard(topic) {
-  const prompt = `Sen tarafsız bir haber editörü asistanısın. Aşağıdaki haber başlığını dengeli bir tartışma kartına dönüştür.
+  const prompt = `Sen tarafsız bir haber editörü asistanısın. Aşağıdaki haber başlığını dengeli ve KISA bir tartışma kartına dönüştür.
 
 HABER: "${topic}"
 
+ÜSLUP KURALLARI (çok önemli):
+- Kısa, net, yalın cümleler kur. Gereksiz sıfat ve dolgu kelime kullanma.
+- Her alan EN FAZLA 2 kısa cümle olsun. Mümkünse tek cümle.
+- Mobil ekranda hızlı okunmalı.
+
 Şunları üret:
 1. category: Şu listeden EN UYGUN olanı seç (sadece biri): ${CATEGORIES.join(", ")}
-2. title: Tarafsız, net başlık, soru biçiminde olabilir (max 100 karakter)
-3. summary: Tarafsız özet, taraf tutmadan, 2-3 cümle
-4. forArgument: DESTEKLEYENLERİN en güçlü argümanı, 2-3 cümle
-5. againstArgument: KARŞI ÇIKANLARIN en güçlü argümanı, 2-3 cümle
+2. title: Tarafsız, net başlık, soru biçiminde (max 70 karakter)
+3. summary: Konunun özü, tarafsız, en fazla 2 kısa cümle
+4. forArgument: DESTEKLEYENLERİN en güçlü argümanı, en fazla 2 kısa cümle
+5. againstArgument: KARŞI ÇIKANLARIN en güçlü argümanı, en fazla 2 kısa cümle
 6. expertRole: Genel uzmanlık alanı (GERÇEK KİŞİ İSMİ KULLANMA)
-7. expertOpinion: O alandan tarafsız değerlendirme, 2-3 cümle
+7. expertOpinion: Tarafsız değerlendirme, en fazla 2 kısa cümle
 
-Eğer başlık siyasi/toplumsal bir tartışmaya uygun DEĞİLSE (magazin, spor skoru, hava durumu gibi), sadece {"skip":true} döndür.
+Eğer başlık siyasi/toplumsal bir tartışmaya uygun DEĞİLSE (magazin, spor skoru, hava durumu, bireysel/adli olaylar gibi), sadece {"skip":true} döndür.
 
 SADECE JSON döndür, başka metin ekleme:
 {"category":"...","title":"...","summary":"...","forArgument":"...","againstArgument":"...","expertRole":"...","expertOpinion":"..."}`;

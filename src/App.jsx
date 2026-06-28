@@ -147,7 +147,22 @@ async function castVote(topicId, voterId, direction) {
   };
 }
 
-const CATEGORIES = ["ANAYASA", "EKONOMİ", "EĞİTİM", "SAĞLIK", "DIŞ POLİTİKA", "ÇEVRE", "TEKNOLOJİ", "DİĞER"];
+const CATEGORIES = ["ANAYASA", "SİYASET", "EKONOMİ", "EĞİTİM", "SAĞLIK", "DIŞ POLİTİKA", "ÇEVRE", "TEKNOLOJİ", "MAGAZİN", "SPOR", "DİĞER"];
+// Kategori renkleri — swipe renklerinden (yeşil/kırmızı/gri) kasıtlı olarak ayrı tonlar
+const CAT_COLOR = {
+  "ANAYASA": "#8B7FD8",      // mor
+  "SİYASET": "#C77DBB",      // pembe-mor
+  "EKONOMİ": "#5BA3C7",      // mavi
+  "EĞİTİM": "#5BC7B0",       // turkuaz
+  "SAĞLIK": "#5FB87A",       // yeşilimsi (yumuşak)
+  "DIŞ POLİTİKA": "#C79A5B", // koyu altın
+  "ÇEVRE": "#7FB85B",        // fıstık yeşili
+  "TEKNOLOJİ": "#6E8FD8",    // indigo
+  "MAGAZİN": "#D87FA8",      // pembe
+  "SPOR": "#D88F5B",         // turuncu
+  "DİĞER": "#8893A8",        // nötr gri-mavi
+};
+const catColor = (c) => CAT_COLOR[c] || CAT_COLOR["DİĞER"];
 const DIR = {
   right: { label: "DESTEKLE", color: "#4CAF7D", sign: "✓" },
   left: { label: "KARŞIYIM", color: "#E05A5A", sign: "✗" },
@@ -257,7 +272,7 @@ function SwipeDeck({ topics, loading }) {
         </div>
         <div style={S.arena}>
           <div style={{ ...S.card, cursor: "default" }}>
-            <div style={S.categoryTag}>{topic.category}</div>
+            <div style={{ ...S.categoryTag, color: catColor(topic.category), background: catColor(topic.category) + "22" }}>{topic.category}</div>
             <h1 style={{ ...S.cardTitle, marginBottom: 18 }}>{topic.title}</h1>
             <div style={S.voteResultLabel}>{counts ? "Sonuçlar" : "Senin oyun kaydedildi"}</div>
             {rows.map((r) => {
@@ -330,7 +345,7 @@ function SwipeDeck({ topics, loading }) {
           {swipeDir === "right" && dOpacity > 0.1 && <div style={{ ...S.badge, color: DIR.right.color, borderColor: DIR.right.color, left: 18, top: 18, opacity: dOpacity }}>✓ DESTEKLE</div>}
           {swipeDir === "left" && dOpacity > 0.1 && <div style={{ ...S.badge, color: DIR.left.color, borderColor: DIR.left.color, right: 18, top: 18, left: "auto", opacity: dOpacity }}>✗ KARŞIYIM</div>}
           {swipeDir === "down" && drag.y > 30 && <div style={{ ...S.badge, color: DIR.down.color, borderColor: DIR.down.color, top: "50%", left: "50%", transform: "translate(-50%,-50%)", opacity: Math.min(drag.y / THRESHOLD, 1) }}>— FİKRİM YOK</div>}
-          <div style={S.categoryTag}>{topic.category}</div>
+          <div style={{ ...S.categoryTag, color: catColor(topic.category), background: catColor(topic.category) + "22" }}>{topic.category}</div>
           <h1 style={S.cardTitle}>{topic.title}</h1>
           <p style={S.cardBody}>{topic.summary}</p>
           {topic.source && (
@@ -453,7 +468,7 @@ function AdminPanel({ allTopics, reload, conn }) {
       {draft && (
         <div style={S.draftWrap}>
           <div style={S.draftLabel}>TASLAK — DÜZENLE VE KAYDET</div>
-          <div style={S.draftCategory}>{draft.category}</div>
+          <div style={{ ...S.draftCategory, color: catColor(draft.category), background: catColor(draft.category) + "22" }}>{draft.category}</div>
           <textarea style={S.editTitle} rows={2} value={draft.title} onChange={editField("title")} />
           <textarea style={S.editBody} rows={3} value={draft.summary} onChange={editField("summary")} />
           <div style={S.editArgLabel}><span style={{ color: DIR.right.color }}>✓ DESTEKLEYEN GÖRÜŞ</span></div>
@@ -476,7 +491,7 @@ function AdminPanel({ allTopics, reload, conn }) {
           <label style={S.label}>⏳ Onay bekleyenler ({pending.length})</label>
           {pending.map(t => (
             <div key={t.id} style={S.queueItem}>
-              <div style={S.approvedCat}>{t.category}</div>
+              <div style={{ ...S.approvedCat, color: catColor(t.category), background: catColor(t.category) + "22" }}>{t.category}</div>
               <div style={S.approvedTitle}>{t.title}</div>
               <div style={S.row}>
                 <button style={{ ...S.btnSm, ...S.btnReject }} onClick={() => changeStatus(t.id, "rejected")} disabled={busy}>✗ Reddet</button>
@@ -494,7 +509,7 @@ function AdminPanel({ allTopics, reload, conn }) {
         {live.map(t => (
           <div key={t.id} style={S.approvedItem}>
             <div style={{ flex: 1 }}>
-              <div style={S.approvedCat}>{t.category}</div>
+              <div style={{ ...S.approvedCat, color: catColor(t.category), background: catColor(t.category) + "22" }}>{t.category}</div>
               <div style={S.approvedTitle}>{t.title}</div>
             </div>
             <button style={S.removeBtn} onClick={() => changeStatus(t.id, "rejected")} disabled={busy}>Kaldır</button>
@@ -626,7 +641,7 @@ const S = {
   arena: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "16px 0", position: "relative", zIndex: 1 },
   card: { width: 300, minHeight: 370, background: "linear-gradient(160deg, #111827 0%, #0D1520 100%)", border: "1px solid", borderRadius: 22, padding: "26px 22px 20px", position: "relative", zIndex: 2, flexShrink: 0, touchAction: "none", boxSizing: "border-box" },
   badge: { position: "absolute", border: "2px solid", borderRadius: 8, padding: "4px 11px", fontSize: 12, fontWeight: 800, letterSpacing: "0.06em", pointerEvents: "none" },
-  categoryTag: { fontSize: 10, letterSpacing: "0.18em", color: "#4B5563", fontWeight: 700, marginBottom: 14 },
+  categoryTag: { display: "inline-block", fontSize: 10, letterSpacing: "0.12em", fontWeight: 800, marginBottom: 14, padding: "4px 10px", borderRadius: 20 },
   cardTitle: { fontSize: 18, fontWeight: 700, lineHeight: 1.38, color: "#F9FAFB", margin: "0 0 14px" },
   cardBody: { fontSize: 13, lineHeight: 1.7, color: "#9CA3AF", margin: "0 0 24px" },
   hints: { display: "flex", justifyContent: "space-between", fontSize: 10, opacity: 0.65, letterSpacing: "0.03em" },
@@ -672,14 +687,14 @@ const S = {
   errorText: { fontSize: 12, color: "#F09797", marginTop: 8 },
   draftWrap: { background: "linear-gradient(160deg, #111827 0%, #0D1520 100%)", border: "1px solid rgba(37,99,235,0.3)", borderRadius: 16, padding: 18, marginBottom: 16 },
   draftLabel: { fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", color: "#6EB5D8", marginBottom: 10 },
-  draftCategory: { fontSize: 10, letterSpacing: "0.18em", color: "#4B5563", fontWeight: 700, marginBottom: 8 },
+  draftCategory: { display: "inline-block", fontSize: 10, letterSpacing: "0.12em", fontWeight: 800, marginBottom: 8, padding: "3px 9px", borderRadius: 20 },
   editTitle: { width: "100%", background: "transparent", border: "1px dashed rgba(255,255,255,0.15)", borderRadius: 8, color: "#F9FAFB", fontSize: 16, fontWeight: 700, lineHeight: 1.35, fontFamily: "inherit", padding: 8, marginBottom: 10, resize: "vertical", boxSizing: "border-box" },
   editBody: { width: "100%", background: "transparent", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 8, color: "#9CA3AF", fontSize: 12.5, lineHeight: 1.6, fontFamily: "inherit", padding: 8, marginBottom: 14, resize: "vertical", boxSizing: "border-box" },
   editArgLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.05em", marginBottom: 6, marginTop: 4, color: "#9CA3AF" },
   editArg: { width: "100%", background: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 8, color: "#D1D5DB", fontSize: 12, lineHeight: 1.6, fontFamily: "inherit", padding: 8, marginBottom: 10, resize: "vertical", boxSizing: "border-box" },
   queueItem: { background: "rgba(224,168,90,0.06)", border: "1px solid rgba(224,168,90,0.18)", borderRadius: 10, padding: 12, marginBottom: 10 },
   approvedItem: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" },
-  approvedCat: { fontSize: 9, color: "#4B5563", fontWeight: 700, letterSpacing: "0.08em", marginBottom: 2 },
+  approvedCat: { display: "inline-block", fontSize: 9, fontWeight: 800, letterSpacing: "0.08em", marginBottom: 4, padding: "2px 8px", borderRadius: 20 },
   approvedTitle: { fontSize: 12.5, color: "#D1D5DB", lineHeight: 1.4, marginBottom: 6 },
   removeBtn: { background: "transparent", border: "1px solid rgba(224,90,90,0.3)", color: "#E05A5A", fontSize: 11, padding: "5px 10px", borderRadius: 8, cursor: "pointer", flexShrink: 0 },
 };

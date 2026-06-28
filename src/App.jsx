@@ -327,46 +327,48 @@ function SwipeDeck({ topics, loading }) {
         {expertOpen && <p style={S.expertBody}>{topic.expert.text}</p>}
       </div>
       <div style={S.arena}>
-        <div style={{ ...S.panel, ...S.panelLeft, opacity: swipeDir === "left" ? 0.25 + dOpacity * 0.75 : 0.18, borderColor: swipeDir === "left" ? `${DIR.left.color}40` : "rgba(255,255,255,0.05)" }}
-          onClick={() => setPanelOpen(p => (p === "against" ? null : "against"))}>
-          <div style={{ ...S.panelTag, color: DIR.left.color }}>✗ KARŞIYIM</div>
-          <p style={S.panelText}>{panelOpen === "against" ? topic.against.text : topic.against.text.slice(0, 72) + "…"}</p>
-          <div style={S.panelHint}>{panelOpen === "against" ? "Kapat ↑" : "Devamı →"}</div>
-        </div>
-        <div style={{
-          ...S.card,
-          transform: `translateX(${drag.x}px) translateY(${Math.max(drag.y * 0.35, 0)}px) rotate(${rotation}deg)`,
-          transition: dragging || flying.current ? (flying.current ? "transform 0.38s cubic-bezier(0.4,0,1,1)" : "box-shadow 0.1s") : "transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275)",
-          boxShadow: activeColor ? `0 24px 72px ${activeColor}55` : "0 20px 60px rgba(0,0,0,0.55)",
-          borderColor: activeColor ? `${activeColor}50` : "rgba(255,255,255,0.07)",
-          cursor: dragging ? "grabbing" : "grab",
-        }}
-          onMouseDown={e => onStart(e.clientX, e.clientY)} onTouchStart={e => onStart(e.touches[0].clientX, e.touches[0].clientY)}>
-          {swipeDir === "right" && dOpacity > 0.1 && <div style={{ ...S.badge, color: DIR.right.color, borderColor: DIR.right.color, left: 18, top: 18, opacity: dOpacity }}>✓ DESTEKLE</div>}
-          {swipeDir === "left" && dOpacity > 0.1 && <div style={{ ...S.badge, color: DIR.left.color, borderColor: DIR.left.color, right: 18, top: 18, left: "auto", opacity: dOpacity }}>✗ KARŞIYIM</div>}
-          {swipeDir === "down" && drag.y > 30 && <div style={{ ...S.badge, color: DIR.down.color, borderColor: DIR.down.color, top: "50%", left: "50%", transform: "translate(-50%,-50%)", opacity: Math.min(drag.y / THRESHOLD, 1) }}>— FİKRİM YOK</div>}
-          <div style={{ ...S.categoryTag, color: catColor(topic.category), background: catColor(topic.category) + "22" }}>{topic.category}</div>
-          <h1 style={S.cardTitle}>{topic.title}</h1>
-          <p style={S.cardBody}>{topic.summary}</p>
-          {topic.source && (
-            <a href={topic.source} target="_blank" rel="noreferrer" style={S.sourceLink}
-              onMouseDown={e => e.stopPropagation()}
-              onTouchStart={e => e.stopPropagation()}
-              onClick={e => e.stopPropagation()}>
-              📰 Kaynak haberi gör ↗
-            </a>
-          )}
-          <div style={S.hints}>
-            <span style={{ color: DIR.left.color }}>← Karşıyım</span>
-            <span style={{ color: DIR.down.color }}>↓ Fikrim yok</span>
-            <span style={{ color: DIR.right.color }}>Destekle →</span>
+        <div style={S.cardGroup}>
+          <div style={{
+            ...S.card,
+            transform: `translateX(${drag.x}px) translateY(${Math.max(drag.y * 0.35, 0)}px) rotate(${rotation}deg)`,
+            transition: dragging || flying.current ? (flying.current ? "transform 0.38s cubic-bezier(0.4,0,1,1)" : "box-shadow 0.1s") : "transform 0.35s cubic-bezier(0.175,0.885,0.32,1.275)",
+            boxShadow: activeColor ? `0 24px 72px ${activeColor}55` : "0 20px 60px rgba(0,0,0,0.55)",
+            borderColor: activeColor ? `${activeColor}50` : "rgba(255,255,255,0.07)",
+            cursor: dragging ? "grabbing" : "grab",
+          }}
+            onMouseDown={e => onStart(e.clientX, e.clientY)} onTouchStart={e => onStart(e.touches[0].clientX, e.touches[0].clientY)}>
+            {swipeDir === "right" && dOpacity > 0.1 && <div style={{ ...S.badge, color: DIR.right.color, borderColor: DIR.right.color, left: 18, top: 18, opacity: dOpacity }}>✓ DESTEKLE</div>}
+            {swipeDir === "left" && dOpacity > 0.1 && <div style={{ ...S.badge, color: DIR.left.color, borderColor: DIR.left.color, right: 18, top: 18, left: "auto", opacity: dOpacity }}>✗ KARŞIYIM</div>}
+            {swipeDir === "down" && drag.y > 30 && <div style={{ ...S.badge, color: DIR.down.color, borderColor: DIR.down.color, top: "50%", left: "50%", transform: "translate(-50%,-50%)", opacity: Math.min(drag.y / THRESHOLD, 1) }}>— FİKRİM YOK</div>}
+            <div style={{ ...S.categoryTag, color: catColor(topic.category), background: catColor(topic.category) + "22" }}>{topic.category}</div>
+            <h1 style={S.cardTitle}>{topic.title}</h1>
+            <p style={S.cardBody}>{topic.summary}</p>
+            {topic.source && (
+              <a href={topic.source} target="_blank" rel="noreferrer" style={S.sourceLink}
+                onMouseDown={e => e.stopPropagation()}
+                onTouchStart={e => e.stopPropagation()}
+                onClick={e => e.stopPropagation()}>
+                📰 Kaynak haberi gör ↗
+              </a>
+            )}
+            <div style={S.hints}>
+              <span style={{ color: DIR.left.color }}>← Karşıyım</span>
+              <span style={{ color: DIR.down.color }}>↓ Fikrim yok</span>
+              <span style={{ color: DIR.right.color }}>Destekle →</span>
+            </div>
           </div>
-        </div>
-        <div style={{ ...S.panel, ...S.panelRight, opacity: swipeDir === "right" ? 0.25 + dOpacity * 0.75 : 0.18, borderColor: swipeDir === "right" ? `${DIR.right.color}40` : "rgba(255,255,255,0.05)" }}
-          onClick={() => setPanelOpen(p => (p === "for" ? null : "for"))}>
-          <div style={{ ...S.panelTag, color: DIR.right.color }}>✓ DESTEKLE</div>
-          <p style={S.panelText}>{panelOpen === "for" ? topic.for.text : topic.for.text.slice(0, 72) + "…"}</p>
-          <div style={S.panelHint}>{panelOpen === "for" ? "Kapat ↑" : "← Devamı"}</div>
+
+          {/* İki görüş — okunabilir kutular */}
+          <div style={S.viewsRow}>
+            <div style={{ ...S.viewBox, borderColor: `${DIR.left.color}33` }}>
+              <div style={{ ...S.viewTag, color: DIR.left.color }}>✗ KARŞIYIM</div>
+              <p style={S.viewText}>{topic.against.text}</p>
+            </div>
+            <div style={{ ...S.viewBox, borderColor: `${DIR.right.color}33` }}>
+              <div style={{ ...S.viewTag, color: DIR.right.color }}>✓ DESTEKLE</div>
+              <p style={S.viewText}>{topic.for.text}</p>
+            </div>
+          </div>
         </div>
       </div>
       <div style={S.footer}>
@@ -639,7 +641,12 @@ const S = {
   expertAuthor: { color: "#8DCCE8", fontWeight: 400 },
   expertBody: { fontSize: 13, color: "#9CC8E0", marginTop: 10, lineHeight: 1.65, paddingBottom: 4 },
   arena: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "16px 0", position: "relative", zIndex: 1 },
-  card: { width: 300, minHeight: 370, background: "linear-gradient(160deg, #111827 0%, #0D1520 100%)", border: "1px solid", borderRadius: 22, padding: "26px 22px 20px", position: "relative", zIndex: 2, flexShrink: 0, touchAction: "none", boxSizing: "border-box" },
+  cardGroup: { display: "flex", flexDirection: "column", alignItems: "center", width: 300 },
+  viewsRow: { display: "flex", gap: 8, width: "100%", marginTop: 12 },
+  viewBox: { flex: 1, background: "#0D1520", border: "1px solid", borderRadius: 14, padding: "12px 12px 14px" },
+  viewTag: { fontSize: 10, fontWeight: 800, letterSpacing: "0.06em", marginBottom: 8 },
+  viewText: { fontSize: 12, color: "#C2CAD6", lineHeight: 1.55, margin: 0 },
+  card: { width: 300, minHeight: 300, background: "linear-gradient(160deg, #111827 0%, #0D1520 100%)", border: "1px solid", borderRadius: 22, padding: "26px 22px 20px", position: "relative", zIndex: 2, flexShrink: 0, touchAction: "none", boxSizing: "border-box" },
   badge: { position: "absolute", border: "2px solid", borderRadius: 8, padding: "4px 11px", fontSize: 12, fontWeight: 800, letterSpacing: "0.06em", pointerEvents: "none" },
   categoryTag: { display: "inline-block", fontSize: 10, letterSpacing: "0.12em", fontWeight: 800, marginBottom: 14, padding: "4px 10px", borderRadius: 20 },
   cardTitle: { fontSize: 18, fontWeight: 700, lineHeight: 1.38, color: "#F9FAFB", margin: "0 0 14px" },

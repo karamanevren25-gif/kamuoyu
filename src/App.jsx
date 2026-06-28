@@ -186,13 +186,20 @@ function SwipeDeck({ topics, loading }) {
   const [expertOpen, setExpertOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(null);
   const [voted, setVoted] = useState(null); // { dir, counts } — oy sonrası sonuç ekranı
+  const [filter, setFilter] = useState([]); // seçili kategoriler; boşsa hepsi
   const flying = useRef(false);
   const start = useRef({ x: 0, y: 0 });
   const voterId = useRef(getVoterId());
 
-  useEffect(() => { setIdx(0); setHistory([]); setDone(false); setVoted(null); }, [topics]);
+  // Filtreye göre gösterilecek konular
+  const deck = filter.length ? topics.filter(t => filter.includes(t.category)) : topics;
+  // Filtre çubuğunda gösterilecek mevcut kategoriler (yayındaki konulardan, sabit sıra)
+  const availableCats = CATEGORIES.filter(c => topics.some(t => t.category === c));
+  const toggleCat = (c) => setFilter(f => (f.includes(c) ? f.filter(x => x !== c) : [...f, c]));
 
-  const topic = topics[idx];
+  useEffect(() => { setIdx(0); setHistory([]); setDone(false); setVoted(null); }, [topics, filter.join(",")]);
+
+  const topic = deck[idx];
   const getDir = (x, y) => {
     if (y > 50 && Math.abs(x) < y * 0.9) return "down";
     if (Math.abs(x) > 35) return x > 0 ? "right" : "left";
@@ -210,21 +217,35 @@ function SwipeDeck({ topics, loading }) {
   const commit = (dir) => {
     flying.current = true;
     setDrag({ x: dir === "right" ? 500 : dir === "left" ? -500 : 0, y: dir === "down" ? 500 : 0 });
-    // Oyu kaydet, sonucu al
     castVote(topic.id, voterId.current, DIR_TO_VOTE[dir])
       .then((counts) => {
         setTimeout(() => { flying.current = false; setVoted({ dir, counts }); setDrag({ x: 0, y: 0 }); setSwipeDir(null); }, 380);
       })
       .catch(() => {
-        // Oy kaydedilemese bile sonucu (en azından kendi oyunu) göster, akışı durdurma
         setTimeout(() => { flying.current = false; setVoted({ dir, counts: null }); setDrag({ x: 0, y: 0 }); setSwipeDir(null); }, 380);
       });
   };
   const proceed = () => {
     setHistory(h => [...h, { title: topic.title, dir: voted.dir }]);
     setVoted(null);
-    if (idx + 1 >= topics.length) setDone(true); else setIdx(i => i + 1);
+    if (idx + 1 >= deck.length) setDone(true); else setIdx(i => i + 1);
   };
+
+  // Filtre çubuğu (birden fazla kategori varsa göster)
+  const filterBar = availableCats.length > 1 ? (
+    <div style={S.filterBar}>
+      <button style={{ ...S.chip, ...(filter.length === 0 ? S.chipAllActive : S.chipInactive) }} onClick={() => setFilter([])}>Tümü</button>
+      {availableCats.map((c) => {
+        const on = filter.includes(c);
+        return (
+          <button key={c} onClick={() => toggleCat(c)}
+            style={{ ...S.chip, color: on ? "#0A0F1A" : catColor(c), background: on ? catColor(c) : catColor(c) + "1A", borderColor: catColor(c) + "55", fontWeight: on ? 800 : 700 }}>
+            {c}
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
 
   if (loading) return <div style={S.loading}>Konular yükleniyor…</div>;
   if (!topics.length) return (
@@ -233,6 +254,19 @@ function SwipeDeck({ topics, loading }) {
       <p style={{ color: "#9CA3AF", fontSize: 14, textAlign: "center", lineHeight: 1.6 }}>
         Yayında konu yok.<br />Yönetici modundan bir konu onaylayıp yayınla.
       </p>
+    </div>
+  );
+
+  // Filtre seçili ama o kategoride konu yoksa
+  if (!deck.length) return (
+    <div style={S.deckRoot}>
+      {filterBar}
+      <div style={S.emptyState}>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
+        <p style={{ color: "#9CA3AF", fontSize: 14, textAlign: "center", lineHeight: 1.6 }}>
+          Bu filtreye uygun konu yok.<br />Başka bir kategori seç veya "Tümü"ne dön.
+        </p>
+      </div>
     </div>
   );
 
@@ -267,6 +301,7 @@ function SwipeDeck({ topics, loading }) {
     const myVote = DIR_TO_VOTE[voted.dir];
     return (
       <div style={S.deckRoot}>
+        {filterBar}
         <div style={S.expertBar}>
           <div style={S.expertLabel}><span style={S.expertIcon}>↑</span> UZMAN GÖRÜŞÜ · <span style={S.expertAuthor}>{topic.expert.author}</span></div>
         </div>
@@ -302,8 +337,8 @@ function SwipeDeck({ topics, loading }) {
           </div>
         </div>
         <div style={S.footer}>
-          <div style={S.bar}><div style={{ ...S.fill, width: `${((idx + 1) / topics.length) * 100}%` }} /></div>
-          <div style={S.counter}>{idx + 1} / {topics.length} konu</div>
+          <div style={S.bar}><div style={{ ...S.fill, width: `${((idx + 1) / deck.length) * 100}%` }} /></div>
+          <div style={S.counter}>{idx + 1} / {deck.length} konu</div>
         </div>
       </div>
     );
@@ -318,6 +353,7 @@ function SwipeDeck({ topics, loading }) {
       onMouseMove={e => onMove(e.clientX, e.clientY)} onMouseUp={onEnd} onMouseLeave={onEnd}
       onTouchMove={e => { e.preventDefault(); onMove(e.touches[0].clientX, e.touches[0].clientY); }} onTouchEnd={onEnd}>
       {activeColor && <div style={{ ...S.glow, background: `radial-gradient(ellipse at ${swipeDir === "right" ? "80%" : swipeDir === "left" ? "20%" : "50%"} 50%, ${activeColor}22 0%, transparent 65%)` }} />}
+      {filterBar}
       <div style={S.expertBar} onClick={() => setExpertOpen(o => !o)}>
         <div style={S.expertLabel}>
           <span style={S.expertIcon}>↑</span>
@@ -372,8 +408,8 @@ function SwipeDeck({ topics, loading }) {
         </div>
       </div>
       <div style={S.footer}>
-        <div style={S.bar}><div style={{ ...S.fill, width: `${(idx / topics.length) * 100}%` }} /></div>
-        <div style={S.counter}>{idx + 1} / {topics.length} konu</div>
+        <div style={S.bar}><div style={{ ...S.fill, width: `${(idx / deck.length) * 100}%` }} /></div>
+        <div style={S.counter}>{idx + 1} / {deck.length} konu</div>
       </div>
     </div>
   );
@@ -634,6 +670,10 @@ const S = {
   switchBtnActive: { background: "rgba(37,99,235,0.18)", borderColor: "#2563EB80", color: "#8DBBF5" },
 
   deckRoot: { display: "flex", flexDirection: "column", alignItems: "center", width: "100%", flex: 1, userSelect: "none", position: "relative" },
+  filterBar: { display: "flex", gap: 6, overflowX: "auto", padding: "10px 14px", width: "100%", maxWidth: 500, boxSizing: "border-box", zIndex: 10, scrollbarWidth: "none", flexShrink: 0 },
+  chip: { flexShrink: 0, fontSize: 11, padding: "6px 13px", borderRadius: 20, border: "1px solid", cursor: "pointer", whiteSpace: "nowrap", letterSpacing: "0.04em", fontFamily: "inherit" },
+  chipAllActive: { background: "rgba(37,99,235,0.9)", color: "#fff", borderColor: "#2563EB", fontWeight: 800 },
+  chipInactive: { background: "rgba(255,255,255,0.04)", color: "#9CA3AF", borderColor: "rgba(255,255,255,0.12)", fontWeight: 700 },
   glow: { position: "fixed", inset: 0, pointerEvents: "none", transition: "background 0.15s", zIndex: 0 },
   expertBar: { width: "100%", maxWidth: 500, padding: "11px 20px", background: "rgba(74,127,165,0.1)", borderBottom: "1px solid rgba(74,127,165,0.18)", cursor: "pointer", zIndex: 10, flexShrink: 0, boxSizing: "border-box" },
   expertLabel: { display: "flex", alignItems: "center", gap: 6, fontSize: 11, letterSpacing: "0.09em", color: "#6EB5D8", fontWeight: 700 },

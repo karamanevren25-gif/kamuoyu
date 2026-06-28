@@ -232,8 +232,14 @@ function SwipeDeck({ topics, loading }) {
   };
 
   // Filtre çubuğu (birden fazla kategori varsa göster)
+  const onWheelScroll = (e) => {
+    // Webde fare tekerleğini yatay kaydırmaya çevir
+    if (e.deltaY !== 0) {
+      e.currentTarget.scrollLeft += e.deltaY;
+    }
+  };
   const filterBar = availableCats.length > 1 ? (
-    <div style={S.filterBar}>
+    <div style={S.filterBar} onWheel={onWheelScroll}>
       <button style={{ ...S.chip, ...(filter.length === 0 ? S.chipAllActive : S.chipInactive) }} onClick={() => setFilter([])}>Tümü</button>
       {availableCats.map((c) => {
         const on = filter.includes(c);

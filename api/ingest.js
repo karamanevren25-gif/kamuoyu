@@ -3,7 +3,7 @@
 // Vercel her gün bir kez (cron) bu adresi çağırır. Manuel test için ?secret=... ile de tetiklenebilir.
 
 const SUPABASE_URL = "https://mzfnafgmlutucxnpuuzo.supabase.co";
-const CATEGORIES = ["ANAYASA", "SİYASET", "EKONOMİ", "EĞİTİM", "SAĞLIK", "DIŞ POLİTİKA", "ÇEVRE", "TEKNOLOJİ", "MAGAZİN", "SPOR", "DİĞER"];
+const CATEGORIES = ["HUKUK", "SİYASET", "EKONOMİ", "EĞİTİM", "SAĞLIK", "DIŞ POLİTİKA", "ÇEVRE", "TEKNOLOJİ", "MAGAZİN", "SPOR", "DİĞER"];
 const DEFAULT_FEED = "https://news.google.com/rss?hl=tr&gl=TR&ceid=TR:tr";
 const MAX_PER_RUN = 3; // her çalışmada en fazla kaç haber işlensin (zaman/maliyet sınırı)
 

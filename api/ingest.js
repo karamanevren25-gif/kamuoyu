@@ -3,7 +3,7 @@
 // Vercel her gün bir kez (cron) bu adresi çağırır. Manuel test için ?secret=... ile de tetiklenebilir.
 
 const SUPABASE_URL = "https://mzfnafgmlutucxnpuuzo.supabase.co";
-const CATEGORIES = ["ANAYASA", "EKONOMİ", "EĞİTİM", "SAĞLIK", "DIŞ POLİTİKA", "ÇEVRE", "TEKNOLOJİ", "DİĞER"];
+const CATEGORIES = ["ANAYASA", "SİYASET", "EKONOMİ", "EĞİTİM", "SAĞLIK", "DIŞ POLİTİKA", "ÇEVRE", "TEKNOLOJİ", "MAGAZİN", "SPOR", "DİĞER"];
 const DEFAULT_FEED = "https://news.google.com/rss?hl=tr&gl=TR&ceid=TR:tr";
 const MAX_PER_RUN = 3; // her çalışmada en fazla kaç haber işlensin (zaman/maliyet sınırı)
 
@@ -66,7 +66,7 @@ Bu denetimi geçtikten sonra düzeltilmiş, dengeli son hali ver.
 6. expertRole: Genel uzmanlık alanı (GERÇEK KİŞİ İSMİ KULLANMA)
 7. expertOpinion: Tarafsız değerlendirme, en fazla 2 kısa cümle
 
-Eğer başlık siyasi/toplumsal bir tartışmaya uygun DEĞİLSE (magazin, spor skoru, hava durumu, bireysel/adli olaylar gibi), sadece {"skip":true} döndür.
+Eğer başlık bir tartışmaya HİÇ uygun değilse (yalnızca maç skoru, hava durumu, dedikodu, tarafların olmadığı bireysel/adli vakalar gibi), sadece {"skip":true} döndür. Tartışılabilir spor veya magazin konuları (kural değişikliği, etik tartışma, politika gibi) UYGUNDUR.
 
 SADECE JSON döndür, başka metin ekleme:
 {"category":"...","title":"...","summary":"...","forArgument":"...","againstArgument":"...","expertRole":"...","expertOpinion":"..."}`;

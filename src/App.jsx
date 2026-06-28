@@ -607,8 +607,8 @@ function LoginForm({ onSuccess }) {
 function Splash() {
   const cards = [
     { rot: -9, dx: -14, dy: 6, delay: 0.0, z: 1, faded: 0.5 },
-    { rot: 7, dx: 12, dy: 3, delay: 0.12, z: 2, faded: 0.7 },
-    { rot: 0, dx: 0, dy: 0, delay: 0.24, z: 3, faded: 1, front: true },
+    { rot: 7, dx: 12, dy: 3, delay: 0.24, z: 2, faded: 0.7 },
+    { rot: 0, dx: 0, dy: 0, delay: 0.48, z: 3, faded: 1, front: true },
   ];
   return (
     <div style={S.splash}>
@@ -656,7 +656,7 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setShowSplash(false), 1300);
+    const t = setTimeout(() => setShowSplash(false), 2600);
     return () => clearTimeout(t);
   }, []);
 
@@ -819,18 +819,18 @@ const S = {
   approvedTitle: { fontSize: 12.5, color: "#D1D5DB", lineHeight: 1.4, marginBottom: 6 },
   removeBtn: { background: "transparent", border: "1px solid rgba(224,90,90,0.3)", color: "#E05A5A", fontSize: 11, padding: "5px 10px", borderRadius: 8, cursor: "pointer", flexShrink: 0 },
 
-  splash: { position: "fixed", inset: 0, background: "#07111F", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 9999, animation: "reyFadeOut 1.3s ease forwards", pointerEvents: "none" },
+  splash: { position: "fixed", inset: 0, background: "#07111F", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 9999, animation: "reyFadeOut 2.6s ease forwards", pointerEvents: "none" },
   splashStack: { position: "relative", width: 132, height: 168, marginBottom: 30 },
-  splashDrop: { position: "absolute", inset: 0, animation: "reyDrop 0.62s cubic-bezier(0.18,0.9,0.32,1.28) both" },
+  splashDrop: { position: "absolute", inset: 0, animation: "reyDrop 1s cubic-bezier(0.18,0.9,0.32,1.28) both" },
   splashCard: { width: 132, height: 168, borderRadius: 18, background: "linear-gradient(160deg, #111827 0%, #0D1520 100%)", boxShadow: "0 18px 40px rgba(0,0,0,0.5)", padding: 14, boxSizing: "border-box" },
   splashPill: { width: 42, height: 12, borderRadius: 20, background: "rgba(139,127,216,0.5)", marginBottom: 14 },
   splashLine: { height: 8, borderRadius: 6, background: "rgba(255,255,255,0.14)", marginBottom: 9 },
   splashMiniRow: { display: "flex", gap: 8, marginTop: 18 },
   splashMiniBox: { flex: 1, height: 38, borderRadius: 8, border: "1px solid" },
-  splashWord: { fontFamily: "'Inter', sans-serif", fontSize: 30, fontWeight: 800, color: "#F5F8FF", letterSpacing: "0.02em", animation: "reyRise 0.5s ease 0.45s both" },
-  splashBarWrap: { display: "flex", width: 84, height: 5, marginTop: 12, borderRadius: 4, overflow: "hidden", animation: "reyRise 0.5s ease 0.55s both", transformOrigin: "center" },
-  splashBarRed: { flex: 1, background: "#E05A5A", animation: "reyBarFill 0.5s ease 0.6s both", transformOrigin: "left" },
-  splashBarGreen: { flex: 1, background: "#4CAF7D", animation: "reyBarFill 0.5s ease 0.7s both", transformOrigin: "right" },
+  splashWord: { fontFamily: "'Inter', sans-serif", fontSize: 30, fontWeight: 800, color: "#F5F8FF", letterSpacing: "0.02em", animation: "reyRise 0.7s ease 0.9s both" },
+  splashBarWrap: { display: "flex", width: 84, height: 5, marginTop: 12, borderRadius: 4, overflow: "hidden", animation: "reyRise 0.7s ease 1.1s both", transformOrigin: "center" },
+  splashBarRed: { flex: 1, background: "#E05A5A", animation: "reyBarFill 0.7s ease 1.2s both", transformOrigin: "left" },
+  splashBarGreen: { flex: 1, background: "#4CAF7D", animation: "reyBarFill 0.7s ease 1.4s both", transformOrigin: "right" },
 };
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 @keyframes reyDrop {

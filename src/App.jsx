@@ -147,10 +147,10 @@ async function castVote(topicId, voterId, direction) {
   };
 }
 
-const CATEGORIES = ["ANAYASA", "SİYASET", "EKONOMİ", "EĞİTİM", "SAĞLIK", "DIŞ POLİTİKA", "ÇEVRE", "TEKNOLOJİ", "MAGAZİN", "SPOR", "DİĞER"];
+const CATEGORIES = ["HUKUK", "SİYASET", "EKONOMİ", "EĞİTİM", "SAĞLIK", "DIŞ POLİTİKA", "ÇEVRE", "TEKNOLOJİ", "MAGAZİN", "SPOR", "DİĞER"];
 // Kategori renkleri — swipe renklerinden (yeşil/kırmızı/gri) kasıtlı olarak ayrı tonlar
 const CAT_COLOR = {
-  "ANAYASA": "#8B7FD8",      // mor
+  "HUKUK": "#8B7FD8",        // mor
   "SİYASET": "#C77DBB",      // pembe-mor
   "EKONOMİ": "#5BA3C7",      // mavi
   "EĞİTİM": "#5BC7B0",       // turkuaz
@@ -603,6 +603,48 @@ function LoginForm({ onSuccess }) {
 }
 
 /* ════════ APP ROOT ════════ */
+/* ════════ AÇILIŞ ANİMASYONU ════════ */
+function Splash() {
+  const cards = [
+    { rot: -9, dx: -14, dy: 6, delay: 0.0, z: 1, faded: 0.5 },
+    { rot: 7, dx: 12, dy: 3, delay: 0.12, z: 2, faded: 0.7 },
+    { rot: 0, dx: 0, dy: 0, delay: 0.24, z: 3, faded: 1, front: true },
+  ];
+  return (
+    <div style={S.splash}>
+      <div style={S.splashStack}>
+        {cards.map((c, i) => (
+          <div key={i} style={{ ...S.splashDrop, zIndex: c.z, animationDelay: `${c.delay}s` }}>
+            <div style={{
+              ...S.splashCard,
+              opacity: c.faded,
+              transform: `translate(${c.dx}px, ${c.dy}px) rotate(${c.rot}deg)`,
+              border: c.front ? "1px solid rgba(110,181,216,0.35)" : "1px solid rgba(255,255,255,0.08)",
+            }}>
+              {c.front && (
+                <>
+                  <div style={S.splashPill} />
+                  <div style={{ ...S.splashLine, width: "80%" }} />
+                  <div style={{ ...S.splashLine, width: "60%" }} />
+                  <div style={S.splashMiniRow}>
+                    <div style={{ ...S.splashMiniBox, borderColor: "rgba(224,90,90,0.4)" }} />
+                    <div style={{ ...S.splashMiniBox, borderColor: "rgba(76,175,125,0.4)" }} />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={S.splashWord}>Reyy</div>
+      <div style={S.splashBarWrap}>
+        <div style={S.splashBarRed} />
+        <div style={S.splashBarGreen} />
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [mode, setMode] = useState("admin");
   const [allTopics, setAllTopics] = useState([]);
@@ -611,6 +653,12 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdminRoute, setIsAdminRoute] = useState(typeof window !== "undefined" && window.location.hash === "#admin");
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowSplash(false), 1300);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     const onHash = () => setIsAdminRoute(window.location.hash === "#admin");
@@ -657,6 +705,7 @@ export default function App() {
     return (
       <div style={S.root}>
         <style>{FONTS}</style>
+        {showSplash && <Splash />}
         <SwipeDeck topics={liveTopics} loading={loading} />
       </div>
     );
@@ -666,6 +715,7 @@ export default function App() {
   return (
     <div style={S.root}>
       <style>{FONTS}</style>
+      {showSplash && <Splash />}
       <div style={S.switcher}>
         <button style={{ ...S.switchBtn, ...(mode === "admin" ? S.switchBtnActive : {}) }} onClick={() => setMode("admin")}>🛠 Yönetici</button>
         <button style={{ ...S.switchBtn, ...(mode === "user" ? S.switchBtnActive : {}) }} onClick={() => setMode("user")}>📱 Önizleme</button>
@@ -686,7 +736,7 @@ export default function App() {
 
 /* ════════ STYLES ════════ */
 const S = {
-  root: { minHeight: "100vh", background: "#07111F", display: "flex", flexDirection: "column", alignItems: "center", fontFamily: "'Inter', system-ui, sans-serif", color: "#F0EDE8", overflow: "hidden", position: "relative" },
+  root: { minHeight: "100vh", background: "#07111F", display: "flex", flexDirection: "column", alignItems: "center", fontFamily: "'Inter', system-ui, sans-serif", color: "#F0EDE8", overflow: "hidden", position: "relative", paddingTop: "env(safe-area-inset-top, 0px)" },
   loading: { padding: 60, color: "#4B5563", fontSize: 13 },
   emptyState: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, padding: 40, marginTop: 40 },
   switcher: { display: "flex", gap: 6, padding: "14px 0 4px", zIndex: 20 },
@@ -768,5 +818,35 @@ const S = {
   approvedCat: { display: "inline-block", fontSize: 9, fontWeight: 800, letterSpacing: "0.08em", marginBottom: 4, padding: "2px 8px", borderRadius: 20 },
   approvedTitle: { fontSize: 12.5, color: "#D1D5DB", lineHeight: 1.4, marginBottom: 6 },
   removeBtn: { background: "transparent", border: "1px solid rgba(224,90,90,0.3)", color: "#E05A5A", fontSize: 11, padding: "5px 10px", borderRadius: 8, cursor: "pointer", flexShrink: 0 },
+
+  splash: { position: "fixed", inset: 0, background: "#07111F", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 9999, animation: "reyFadeOut 1.3s ease forwards", pointerEvents: "none" },
+  splashStack: { position: "relative", width: 132, height: 168, marginBottom: 30 },
+  splashDrop: { position: "absolute", inset: 0, animation: "reyDrop 0.62s cubic-bezier(0.18,0.9,0.32,1.28) both" },
+  splashCard: { width: 132, height: 168, borderRadius: 18, background: "linear-gradient(160deg, #111827 0%, #0D1520 100%)", boxShadow: "0 18px 40px rgba(0,0,0,0.5)", padding: 14, boxSizing: "border-box" },
+  splashPill: { width: 42, height: 12, borderRadius: 20, background: "rgba(139,127,216,0.5)", marginBottom: 14 },
+  splashLine: { height: 8, borderRadius: 6, background: "rgba(255,255,255,0.14)", marginBottom: 9 },
+  splashMiniRow: { display: "flex", gap: 8, marginTop: 18 },
+  splashMiniBox: { flex: 1, height: 38, borderRadius: 8, border: "1px solid" },
+  splashWord: { fontFamily: "'Inter', sans-serif", fontSize: 30, fontWeight: 800, color: "#F5F8FF", letterSpacing: "0.02em", animation: "reyRise 0.5s ease 0.45s both" },
+  splashBarWrap: { display: "flex", width: 84, height: 5, marginTop: 12, borderRadius: 4, overflow: "hidden", animation: "reyRise 0.5s ease 0.55s both", transformOrigin: "center" },
+  splashBarRed: { flex: 1, background: "#E05A5A", animation: "reyBarFill 0.5s ease 0.6s both", transformOrigin: "left" },
+  splashBarGreen: { flex: 1, background: "#4CAF7D", animation: "reyBarFill 0.5s ease 0.7s both", transformOrigin: "right" },
 };
-const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');`;
+const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+@keyframes reyDrop {
+  0%   { transform: translateY(-180%); opacity: 0; }
+  70%  { opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes reyRise {
+  0%   { transform: translateY(14px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes reyBarFill {
+  0%   { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+@keyframes reyFadeOut {
+  0%, 78% { opacity: 1; }
+  100%    { opacity: 0; }
+}`;

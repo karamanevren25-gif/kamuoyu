@@ -604,12 +604,19 @@ function LoginForm({ onSuccess }) {
 
 /* ════════ APP ROOT ════════ */
 export default function App() {
-  const [mode, setMode] = useState("user");
+  const [mode, setMode] = useState("admin");
   const [allTopics, setAllTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [conn, setConn] = useState("loading");
   const [session, setSession] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [isAdminRoute, setIsAdminRoute] = useState(typeof window !== "undefined" && window.location.hash === "#admin");
+
+  useEffect(() => {
+    const onHash = () => setIsAdminRoute(window.location.hash === "#admin");
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   async function reload() {
     setLoading(true);
@@ -634,7 +641,7 @@ export default function App() {
   function handleLogout() {
     signOut();
     setSession(null);
-    setMode("user");
+    setMode("admin");
     reload();
   }
 
@@ -645,6 +652,17 @@ export default function App() {
 
   const liveTopics = allTopics.filter(t => t.status === "live");
 
+  // Normal kullanıcı: sadece swipe ekranı, hiçbir yönetici düğmesi yok
+  if (!isAdminRoute) {
+    return (
+      <div style={S.root}>
+        <style>{FONTS}</style>
+        <SwipeDeck topics={liveTopics} loading={loading} />
+      </div>
+    );
+  }
+
+  // Yönetici (gizli /#admin adresi): giriş + panel + önizleme
   return (
     <div style={S.root}>
       <style>{FONTS}</style>

@@ -38,6 +38,12 @@ Yanıtı oluşturduktan sonra, son hali vermeden önce şunları zihninde kontro
 - Özet ve uzman görüşü tarafsız mı? Uzman görüşü gizliden bir tarafı desteklemesin; gerçekten dengeleyici olsun.
 Bu denetimi geçtikten sonra düzeltilmiş, dengeli son hali ver.
 
+HASSASİYET KURALLARI (hukuki risk — çok önemli):
+- Kanıtlanmamış kişisel suçlama veya iddiaları GERÇEK gibi sunma. Belirli bir kişiyi (isimle) suçlayan, itham eden veya hakkında kanıtlanmamış iddia içeren bir konuysa, başlığı kişiyi hedef almadan, GENEL POLİTİKA/İLKE tartışmasına çevir.
+- Örnek: "X kişisi rüşvet aldı mı?" yerine → konuyu "Kamu görevlilerinin denetimi nasıl olmalı?" gibi genel ve tarafsız bir çerçeveye taşı.
+- Kişilerin özel hayatı, sağlığı, cinsel yönelimi gibi konuları işleme.
+- Devam eden bir yargı sürecini "suçlu/masum" diye sunma; masumiyet karinesini koru.
+
 Şunları üret:
 1. title: Tarafsız, net başlık, soru biçiminde (max 70 karakter)
 2. summary: Konunun özü, tarafsız, en fazla 2 kısa cümle

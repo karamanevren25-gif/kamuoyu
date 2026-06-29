@@ -89,6 +89,7 @@ async function dbInsert(topic) {
     against_text: topic.against.text,
     expert_role: topic.expert.author,
     expert_text: topic.expert.text,
+    source_url: topic.source ? topic.source.trim() : null,
     status: topic.status || "pending",
   };
   const res = await fetch(`${REST}/topics`, {
@@ -447,6 +448,7 @@ function AdminPanel({ allTopics, reload, conn }) {
         category, title: parsed.title || "", summary: parsed.summary || "",
         for: { text: parsed.forArgument || "" }, against: { text: parsed.againstArgument || "" },
         expert: { author: parsed.expertRole || "Uzman Değerlendirmesi", text: parsed.expertOpinion || "" },
+        source: "",
       });
     } catch (e) {
       setError("Taslak oluşturulamadı: " + e.message);
@@ -521,6 +523,8 @@ function AdminPanel({ allTopics, reload, conn }) {
           <textarea style={S.editArg} rows={3} value={draft.against.text} onChange={editField("against", true)} />
           <div style={S.editArgLabel}>↑ UZMAN — <span style={{ opacity: 0.6 }}>{draft.expert.author}</span></div>
           <textarea style={S.editArg} rows={3} value={draft.expert.text} onChange={editField("expert", true)} />
+          <div style={S.editArgLabel}>📰 KAYNAK LİNKİ <span style={{ opacity: 0.6 }}>(isteğe bağlı)</span></div>
+          <input style={S.editSource} type="url" placeholder="https://haberkaynagi.com/haber..." value={draft.source || ""} onChange={editField("source")} />
           <div style={S.row}>
             <button style={{ ...S.btn, ...S.btnReject }} onClick={() => setDraft(null)} disabled={busy}>✗ İptal</button>
             <button style={{ ...S.btn, ...S.btnGhost }} onClick={() => saveDraft("pending")} disabled={busy}>⏳ Kuyruğa At</button>
@@ -813,6 +817,7 @@ const S = {
   editBody: { width: "100%", background: "transparent", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 8, color: "#9CA3AF", fontSize: 12.5, lineHeight: 1.6, fontFamily: "inherit", padding: 8, marginBottom: 14, resize: "vertical", boxSizing: "border-box" },
   editArgLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.05em", marginBottom: 6, marginTop: 4, color: "#9CA3AF" },
   editArg: { width: "100%", background: "rgba(255,255,255,0.03)", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 8, color: "#D1D5DB", fontSize: 12, lineHeight: 1.6, fontFamily: "inherit", padding: 8, marginBottom: 10, resize: "vertical", boxSizing: "border-box" },
+  editSource: { width: "100%", background: "rgba(110,181,216,0.06)", border: "1px solid rgba(110,181,216,0.25)", borderRadius: 8, color: "#9FD0E8", fontSize: 12, fontFamily: "inherit", padding: 9, marginBottom: 12, boxSizing: "border-box" },
   queueItem: { background: "rgba(224,168,90,0.06)", border: "1px solid rgba(224,168,90,0.18)", borderRadius: 10, padding: 12, marginBottom: 10 },
   approvedItem: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" },
   approvedCat: { display: "inline-block", fontSize: 9, fontWeight: 800, letterSpacing: "0.08em", marginBottom: 4, padding: "2px 8px", borderRadius: 20 },

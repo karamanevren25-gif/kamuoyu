@@ -315,6 +315,11 @@ function SwipeDeck({ topics, loading }) {
           </div>
         ))}
         <button style={S.resetBtn} onClick={() => { setIdx(0); setHistory([]); setDone(false); setVoted(null); }}>Tekrar Başla</button>
+        <div style={S.footerLinks}>
+          <a href="/hakkinda.html" target="_blank" rel="noreferrer" style={S.footerLink}>Hakkında</a>
+          <span style={{ opacity: 0.3 }}>·</span>
+          <a href="/gizlilik.html" target="_blank" rel="noreferrer" style={S.footerLink}>Gizlilik</a>
+        </div>
       </div>
     );
   }
@@ -814,6 +819,8 @@ const S = {
   resultHeading: { fontSize: 20, fontWeight: 700, color: "#F9FAFB", textAlign: "center", margin: "0 0 24px" },
   resultRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", fontSize: 13, borderBottom: "1px solid rgba(255,255,255,0.06)" },
   resetBtn: { marginTop: 24, width: "100%", padding: "13px", background: "linear-gradient(135deg, #1E3A5F, #2563EB)", color: "#F0EDE8", border: "none", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: "0.05em" },
+  footerLinks: { display: "flex", gap: 10, justifyContent: "center", alignItems: "center", marginTop: 22, fontSize: 12 },
+  footerLink: { color: "#6B7280", textDecoration: "none" },
 
   voteResultLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "#6B7280", textTransform: "uppercase", marginBottom: 16 },
   voteRowTop: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, marginBottom: 6 },

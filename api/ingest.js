@@ -57,6 +57,11 @@ Yanıtı oluşturduktan sonra, son hali vermeden önce şunları zihninde kontro
 - Özet ve uzman görüşü tarafsız mı? Uzman görüşü gizliden bir tarafı desteklemesin.
 Bu denetimi geçtikten sonra düzeltilmiş, dengeli son hali ver.
 
+HASSASİYET KURALLARI (hukuki risk — çok önemli):
+- Kanıtlanmamış kişisel suçlama veya iddiaları GERÇEK gibi sunma. Belirli bir kişiyi (isimle) suçlayan veya hakkında kanıtlanmamış iddia içeren bir haberse, başlığı kişiyi hedef almadan GENEL POLİTİKA/İLKE tartışmasına çevir.
+- Devam eden yargı sürecini "suçlu/masum" diye sunma; masumiyet karinesini koru.
+- Kişilerin özel hayatı, sağlığı gibi konuları işleme.
+
 Şunları üret:
 1. category: Şu listeden EN UYGUN olanı seç (sadece biri): ${CATEGORIES.join(", ")}
 2. title: Tarafsız, net başlık, soru biçiminde (max 70 karakter)
@@ -66,7 +71,7 @@ Bu denetimi geçtikten sonra düzeltilmiş, dengeli son hali ver.
 6. expertRole: Genel uzmanlık alanı (GERÇEK KİŞİ İSMİ KULLANMA)
 7. expertOpinion: Tarafsız değerlendirme, en fazla 2 kısa cümle
 
-Eğer başlık bir tartışmaya HİÇ uygun değilse (yalnızca maç skoru, hava durumu, dedikodu, tarafların olmadığı bireysel/adli vakalar gibi), sadece {"skip":true} döndür. Tartışılabilir spor veya magazin konuları (kural değişikliği, etik tartışma, politika gibi) UYGUNDUR.
+Eğer başlık bir tartışmaya HİÇ uygun değilse (yalnızca maç skoru, hava durumu, dedikodu, tarafların olmadığı bireysel/adli vakalar gibi) VEYA temelde belirli bir kişiyi hedef alan kanıtlanmamış bir suçlama/iddiaysa ve genel bir ilke tartışmasına çevrilemiyorsa, sadece {"skip":true} döndür. Tartışılabilir spor veya magazin konuları (kural değişikliği, etik tartışma, politika gibi) UYGUNDUR.
 
 SADECE JSON döndür, başka metin ekleme:
 {"category":"...","title":"...","summary":"...","forArgument":"...","againstArgument":"...","expertRole":"...","expertOpinion":"..."}`;

@@ -187,6 +187,7 @@ function SwipeDeck({ topics, loading }) {
   const [expertOpen, setExpertOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(null);
   const [voted, setVoted] = useState(null); // { dir, counts } — oy sonrası sonuç ekranı
+  const [shareMsg, setShareMsg] = useState(null);
   const [filter, setFilter] = useState([]); // seçili kategoriler; boşsa hepsi
   const flying = useRef(false);
   const start = useRef({ x: 0, y: 0 });
@@ -231,6 +232,29 @@ function SwipeDeck({ topics, loading }) {
     setVoted(null);
     if (idx + 1 >= deck.length) setDone(true); else setIdx(i => i + 1);
   };
+
+  async function shareTopic() {
+    const url = "https://reyyapp.com";
+    const counts = voted && voted.counts;
+    let text;
+    if (counts) {
+      const tot = counts.for + counts.against + counts.neutral;
+      const pf = tot ? Math.round((counts.for / tot) * 100) : 0;
+      const pa = tot ? Math.round((counts.against / tot) * 100) : 0;
+      text = `${topic.title}\n\n%${pf} destekliyor, %${pa} karşı çıkıyor. Sen ne dersin? Reyy'de oyla 👇`;
+    } else {
+      text = `${topic.title}\n\nSen ne düşünüyorsun? Reyy'de oyla 👇`;
+    }
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Reyy", text, url });
+      } else {
+        await navigator.clipboard.writeText(`${text} ${url}`);
+        setShareMsg("Bağlantı kopyalandı ✓");
+        setTimeout(() => setShareMsg(null), 2000);
+      }
+    } catch (e) { /* kullanıcı vazgeçti veya desteklenmiyor */ }
+  }
 
   // Filtre çubuğu (birden fazla kategori varsa göster)
   const onWheelScroll = (e) => {
@@ -340,7 +364,11 @@ function SwipeDeck({ topics, loading }) {
                 📰 Kaynak haberi gör ↗
               </a>
             )}
-            <button style={S.continueBtn} onClick={proceed}>Devam →</button>
+            <div style={S.voteActions}>
+              <button style={S.shareBtn} onClick={shareTopic}>↗ Paylaş</button>
+              <button style={S.continueBtnFlex} onClick={proceed}>Devam →</button>
+            </div>
+            {shareMsg && <div style={S.shareMsg}>{shareMsg}</div>}
           </div>
         </div>
         <div style={S.footer}>
@@ -794,6 +822,10 @@ const S = {
   voteBarFill: { height: "100%", borderRadius: 5, transition: "width 0.6s cubic-bezier(0.22,1,0.36,1)" },
   voteTotal: { fontSize: 11, color: "#4B5563", textAlign: "center", marginTop: 16, letterSpacing: "0.04em" },
   continueBtn: { marginTop: 18, width: "100%", padding: "13px", background: "linear-gradient(135deg, #1E3A5F, #2563EB)", color: "#F0EDE8", border: "none", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: "0.05em" },
+  voteActions: { display: "flex", gap: 9, marginTop: 18 },
+  shareBtn: { flexShrink: 0, padding: "13px 18px", background: "transparent", color: "#9FD0E8", border: "1px solid rgba(110,181,216,0.35)", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: "0.03em", fontFamily: "inherit" },
+  continueBtnFlex: { flex: 1, padding: "13px", background: "linear-gradient(135deg, #1E3A5F, #2563EB)", color: "#F0EDE8", border: "none", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: "0.05em", fontFamily: "inherit" },
+  shareMsg: { textAlign: "center", fontSize: 12, color: "#4CAF7D", marginTop: 10, fontWeight: 600 },
 
   adminRoot: { width: "100%", maxWidth: 480, padding: "8px 18px 40px", boxSizing: "border-box" },
   connBar: { fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", padding: "8px 14px", border: "1px solid", borderRadius: 10, marginBottom: 14, textAlign: "center" },

@@ -159,6 +159,16 @@ async function getVotedTopics(voterId) {
   return (Array.isArray(rows) ? rows : []).map((r) => (r && typeof r === "object" ? r.topic_id : r));
 }
 
+async function getMyVotes(voterId) {
+  const res = await fetch(`${REST}/rpc/get_my_votes`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ p_voter_id: voterId }),
+  });
+  if (!res.ok) throw new Error(`HISTORY ${res.status}`);
+  return await res.json(); // [{topic_id,title,category,direction,voted_at,for_count,against_count,neutral_count}]
+}
+
 const CATEGORIES = ["HUKUK", "SİYASET", "EKONOMİ", "EĞİTİM", "SAĞLIK", "DIŞ POLİTİKA", "ÇEVRE", "TEKNOLOJİ", "MAGAZİN", "SPOR", "DİĞER"];
 // Kategori renkleri — swipe renklerinden (yeşil/kırmızı/gri) kasıtlı olarak ayrı tonlar
 const CAT_COLOR = {
@@ -201,6 +211,8 @@ function SwipeDeck({ topics, loading, error, onRetry }) {
   const [shareMsg, setShareMsg] = useState(null);
   const [filter, setFilter] = useState([]); // seçili kategoriler; boşsa hepsi
   const [votedIds, setVotedIds] = useState(() => new Set()); // bu cihazın daha önce oyladığı konular
+  const [showHistory, setShowHistory] = useState(false);
+  const [myVotes, setMyVotes] = useState(null); // null = yüklenmedi
   const flying = useRef(false);
   const start = useRef({ x: 0, y: 0 });
   const voterId = useRef(getVoterId());
@@ -303,6 +315,56 @@ function SwipeDeck({ topics, loading, error, onRetry }) {
   ) : null;
 
   if (loading) return <div style={S.loading}>Konular yükleniyor…</div>;
+
+  /* ── OY GEÇMİŞİM ── */
+  const openHistory = () => {
+    setShowHistory(true);
+    if (myVotes === null) {
+      getMyVotes(voterId.current).then(setMyVotes).catch(() => setMyVotes([]));
+    } else {
+      // her açılışta tazele (yeni oylar eklenmiş olabilir)
+      getMyVotes(voterId.current).then(setMyVotes).catch(() => {});
+    }
+  };
+  const histBtn = (
+    <button style={S.histLink} onClick={openHistory}>🗳 Oy Geçmişim</button>
+  );
+
+  if (showHistory) {
+    const DIRV = { for: DIR.right, against: DIR.left, neutral: DIR.down };
+    return (
+      <div style={S.deckRoot}>
+        <div style={S.histWrap}>
+          <h2 style={S.histTitle}>🗳 Oy Geçmişim</h2>
+          {myVotes === null && <div style={S.loading}>Yükleniyor…</div>}
+          {Array.isArray(myVotes) && myVotes.length === 0 && (
+            <p style={{ color: "#9CA3AF", fontSize: 14, textAlign: "center", lineHeight: 1.6 }}>Henüz oy vermedin.<br />Bir konuyu kaydırarak başla!</p>
+          )}
+          {Array.isArray(myVotes) && myVotes.map((v) => {
+            const my = DIRV[v.direction] || DIR.down;
+            const tot = (Number(v.for_count) || 0) + (Number(v.against_count) || 0) + (Number(v.neutral_count) || 0);
+            const pct = (n) => (tot ? Math.round(((Number(n) || 0) / tot) * 100) : 0);
+            return (
+              <div key={v.topic_id} style={S.histCard}>
+                <div style={{ ...S.approvedCat, color: catColor(v.category), background: catColor(v.category) + "22" }}>{v.category}</div>
+                <div style={S.histCardTitle}>{v.title}</div>
+                <div style={S.histRow}>
+                  <span style={{ color: my.color, fontWeight: 800 }}>{my.sign} Senin oyun: {my.label}</span>
+                </div>
+                <div style={S.histPcts}>
+                  <span style={{ color: DIR.right.color, fontWeight: v.direction === "for" ? 800 : 600 }}>✓ %{pct(v.for_count)}</span>
+                  <span style={{ color: DIR.left.color, fontWeight: v.direction === "against" ? 800 : 600 }}>✗ %{pct(v.against_count)}</span>
+                  <span style={{ color: DIR.down.color, fontWeight: v.direction === "neutral" ? 800 : 600 }}>— %{pct(v.neutral_count)}</span>
+                  <span style={{ color: "#4B5563", marginLeft: "auto" }}>{tot} oy</span>
+                </div>
+              </div>
+            );
+          })}
+          <button style={{ ...S.resetBtn, marginTop: 16 }} onClick={() => setShowHistory(false)}>← Konulara Dön</button>
+        </div>
+      </div>
+    );
+  }
   if (!topics.length) return (
     <div style={S.emptyState}>
       <div style={{ fontSize: 40, marginBottom: 12 }}>{error ? "📡" : "📭"}</div>
@@ -331,6 +393,7 @@ function SwipeDeck({ topics, loading, error, onRetry }) {
               ? <>Şimdilik hepsi bu kadar — tüm konuları oyladın!<br />Yeni konular eklendikçe burada olacak.</>
               : <>Bu filtreye uygun konu yok.<br />Başka bir kategori seç veya "Tümü"ne dön.</>}
           </p>
+          {allVoted && histBtn}
           <div style={S.footerLinks}>
             <a href="/hakkinda.html" target="_blank" rel="noreferrer" style={S.footerLink}>Hakkında</a>
             <span style={{ opacity: 0.3 }}>·</span>
@@ -357,6 +420,7 @@ function SwipeDeck({ topics, loading, error, onRetry }) {
         <p style={{ color: "#6B7280", fontSize: 12.5, textAlign: "center", lineHeight: 1.6, marginTop: 18 }}>
           Yeni konular eklendikçe burada olacak. 👋
         </p>
+        {histBtn}
         <div style={S.footerLinks}>
           <a href="/hakkinda.html" target="_blank" rel="noreferrer" style={S.footerLink}>Hakkında</a>
           <span style={{ opacity: 0.3 }}>·</span>
@@ -421,6 +485,7 @@ function SwipeDeck({ topics, loading, error, onRetry }) {
         <div style={S.footer}>
           <div style={S.bar}><div style={{ ...S.fill, width: `${((idx + 1) / deck.length) * 100}%` }} /></div>
           <div style={S.counter}>{idx + 1} / {deck.length} konu</div>
+          {histBtn}
         </div>
       </div>
     );
@@ -492,6 +557,7 @@ function SwipeDeck({ topics, loading, error, onRetry }) {
       <div style={S.footer}>
         <div style={S.bar}><div style={{ ...S.fill, width: `${(idx / deck.length) * 100}%` }} /></div>
         <div style={S.counter}>{idx + 1} / {deck.length} konu</div>
+          {histBtn}
       </div>
     </div>
   );
@@ -863,6 +929,13 @@ const S = {
   resetBtn: { marginTop: 24, width: "100%", padding: "13px", background: "linear-gradient(135deg, #1E3A5F, #2563EB)", color: "#F0EDE8", border: "none", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: "0.05em" },
   footerLinks: { display: "flex", gap: 10, justifyContent: "center", alignItems: "center", marginTop: 22, fontSize: 12 },
   footerLink: { color: "#6B7280", textDecoration: "none" },
+  histLink: { marginTop: 10, background: "transparent", border: "none", color: "#6B7280", fontSize: 12, cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.03em", padding: 4 },
+  histWrap: { width: "100%", maxWidth: 360, padding: "20px 16px 40px", overflowY: "auto", flex: 1, boxSizing: "border-box" },
+  histTitle: { color: "#F5F8FF", fontSize: 19, fontWeight: 800, textAlign: "center", margin: "6px 0 18px" },
+  histCard: { background: "linear-gradient(160deg, #111827 0%, #0D1520 100%)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "14px 14px 12px", marginBottom: 10 },
+  histCardTitle: { color: "#E5EAF2", fontSize: 13.5, fontWeight: 700, lineHeight: 1.45, margin: "6px 0 10px" },
+  histRow: { fontSize: 12, marginBottom: 8 },
+  histPcts: { display: "flex", gap: 12, alignItems: "center", fontSize: 11.5, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 8 },
 
   voteResultLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "#6B7280", textTransform: "uppercase", marginBottom: 16 },
   voteRowTop: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, marginBottom: 6 },

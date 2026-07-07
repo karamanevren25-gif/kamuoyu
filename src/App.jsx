@@ -188,7 +188,7 @@ const STATUS_META = {
 const THRESHOLD = 85;
 
 /* ════════ SWIPE DECK ════════ */
-function SwipeDeck({ topics, loading }) {
+function SwipeDeck({ topics, loading, error, onRetry }) {
   const [idx, setIdx] = useState(0);
   const [drag, setDrag] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
@@ -305,10 +305,15 @@ function SwipeDeck({ topics, loading }) {
   if (loading) return <div style={S.loading}>Konular yükleniyor…</div>;
   if (!topics.length) return (
     <div style={S.emptyState}>
-      <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+      <div style={{ fontSize: 40, marginBottom: 12 }}>{error ? "📡" : "📭"}</div>
       <p style={{ color: "#9CA3AF", fontSize: 14, textAlign: "center", lineHeight: 1.6 }}>
-        Yayında konu yok.<br />Yönetici modundan bir konu onaylayıp yayınla.
+        {error
+          ? <>Şu an konulara ulaşılamıyor.<br />İnternet bağlantını kontrol edip tekrar dene.</>
+          : <>Henüz yayında konu yok.<br />Yakında yeni konular eklenecek.</>}
       </p>
+      {error && onRetry && (
+        <button style={{ ...S.resetBtn, width: "auto", padding: "11px 28px" }} onClick={onRetry}>Yenile</button>
+      )}
     </div>
   );
 
@@ -780,7 +785,7 @@ export default function App() {
       <div style={S.root}>
         <style>{FONTS}</style>
         {showSplash && <Splash />}
-        <SwipeDeck topics={liveTopics} loading={loading} />
+        <SwipeDeck topics={liveTopics} loading={loading} error={conn === "error"} onRetry={reload} />
       </div>
     );
   }
@@ -803,7 +808,7 @@ export default function App() {
             : session
               ? <AdminPanel allTopics={allTopics} reload={reload} conn={conn} />
               : <LoginForm onSuccess={handleLoginSuccess} />)
-        : <SwipeDeck topics={liveTopics} loading={loading} />}
+        : <SwipeDeck topics={liveTopics} loading={loading} error={conn === "error"} onRetry={reload} />}
     </div>
   );
 }

@@ -148,6 +148,17 @@ async function castVote(topicId, voterId, direction) {
   };
 }
 
+async function getVotedTopics(voterId) {
+  const res = await fetch(`${REST}/rpc/get_voted_topics`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ p_voter_id: voterId }),
+  });
+  if (!res.ok) return [];
+  const rows = await res.json();
+  return (Array.isArray(rows) ? rows : []).map((r) => (r && typeof r === "object" ? r.topic_id : r));
+}
+
 const CATEGORIES = ["HUKUK", "SİYASET", "EKONOMİ", "EĞİTİM", "SAĞLIK", "DIŞ POLİTİKA", "ÇEVRE", "TEKNOLOJİ", "MAGAZİN", "SPOR", "DİĞER"];
 // Kategori renkleri — swipe renklerinden (yeşil/kırmızı/gri) kasıtlı olarak ayrı tonlar
 const CAT_COLOR = {
@@ -189,12 +200,20 @@ function SwipeDeck({ topics, loading }) {
   const [voted, setVoted] = useState(null); // { dir, counts } — oy sonrası sonuç ekranı
   const [shareMsg, setShareMsg] = useState(null);
   const [filter, setFilter] = useState([]); // seçili kategoriler; boşsa hepsi
+  const [votedIds, setVotedIds] = useState(() => new Set()); // bu cihazın daha önce oyladığı konular
   const flying = useRef(false);
   const start = useRef({ x: 0, y: 0 });
   const voterId = useRef(getVoterId());
 
-  // Filtreye göre gösterilecek konular
-  const deck = filter.length ? topics.filter(t => filter.includes(t.category)) : topics;
+  // Açılışta: bu ziyaretçinin daha önce oyladığı konuları öğren (oylananlar tekrar gösterilmez)
+  useEffect(() => {
+    getVotedTopics(voterId.current)
+      .then((ids) => setVotedIds(new Set(ids)))
+      .catch(() => {});
+  }, []);
+
+  // Filtreye göre gösterilecek konular (daha önce oylananlar hariç)
+  const deck = (filter.length ? topics.filter(t => filter.includes(t.category)) : topics).filter(t => !votedIds.has(t.id));
   // Filtre çubuğunda gösterilecek mevcut kategoriler (yayındaki konulardan, sabit sıra)
   const availableCats = CATEGORIES.filter(c => topics.some(t => t.category === c));
   const toggleCat = (c) => setFilter(f => (f.includes(c) ? f.filter(x => x !== c) : [...f, c]));
@@ -230,7 +249,12 @@ function SwipeDeck({ topics, loading }) {
   const proceed = () => {
     setHistory(h => [...h, { title: topic.title, dir: voted.dir }]);
     setVoted(null);
-    if (idx + 1 >= deck.length) setDone(true); else setIdx(i => i + 1);
+    // Bu konuyu kalıcı olarak "oylandı" işaretle — desteden düşer, tekrar gösterilmez
+    const newLen = deck.length - 1; // bu konu çıkınca kalan sayı
+    setVotedIds(s => { const n = new Set(s); n.add(topic.id); return n; });
+    if (newLen <= 0) { setDone(true); return; }
+    // Konu desteden çıktığı için sıradaki konu aynı indekse kayar; sadece taşmayı önle
+    if (idx >= newLen) setIdx(0);
   };
 
   async function shareTopic() {
@@ -288,18 +312,29 @@ function SwipeDeck({ topics, loading }) {
     </div>
   );
 
-  // Filtre seçili ama o kategoride konu yoksa
-  if (!deck.length) return (
-    <div style={S.deckRoot}>
-      {filterBar}
-      <div style={S.emptyState}>
-        <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
-        <p style={{ color: "#9CA3AF", fontSize: 14, textAlign: "center", lineHeight: 1.6 }}>
-          Bu filtreye uygun konu yok.<br />Başka bir kategori seç veya "Tümü"ne dön.
-        </p>
+  // Deste boş: ya tüm konular oylandı ya da filtre daralttı
+  if (!deck.length) {
+    const filteredAll = filter.length ? topics.filter(t => filter.includes(t.category)) : topics;
+    const allVoted = filteredAll.length > 0 && filteredAll.every(t => votedIds.has(t.id));
+    return (
+      <div style={S.deckRoot}>
+        {filterBar}
+        <div style={S.emptyState}>
+          <div style={{ fontSize: 36, marginBottom: 12 }}>{allVoted ? "🎉" : "🔍"}</div>
+          <p style={{ color: "#9CA3AF", fontSize: 14, textAlign: "center", lineHeight: 1.6 }}>
+            {allVoted
+              ? <>Şimdilik hepsi bu kadar — tüm konuları oyladın!<br />Yeni konular eklendikçe burada olacak.</>
+              : <>Bu filtreye uygun konu yok.<br />Başka bir kategori seç veya "Tümü"ne dön.</>}
+          </p>
+          <div style={S.footerLinks}>
+            <a href="/hakkinda.html" target="_blank" rel="noreferrer" style={S.footerLink}>Hakkında</a>
+            <span style={{ opacity: 0.3 }}>·</span>
+            <a href="/gizlilik.html" target="_blank" rel="noreferrer" style={S.footerLink}>Gizlilik</a>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   if (done) {
     const c = { right: 0, left: 0, down: 0 };
@@ -314,7 +349,9 @@ function SwipeDeck({ topics, loading }) {
             <strong style={{ color: "#F9FAFB", fontSize: 18 }}>{c[d]}</strong>
           </div>
         ))}
-        <button style={S.resetBtn} onClick={() => { setIdx(0); setHistory([]); setDone(false); setVoted(null); }}>Tekrar Başla</button>
+        <p style={{ color: "#6B7280", fontSize: 12.5, textAlign: "center", lineHeight: 1.6, marginTop: 18 }}>
+          Yeni konular eklendikçe burada olacak. 👋
+        </p>
         <div style={S.footerLinks}>
           <a href="/hakkinda.html" target="_blank" rel="noreferrer" style={S.footerLink}>Hakkında</a>
           <span style={{ opacity: 0.3 }}>·</span>

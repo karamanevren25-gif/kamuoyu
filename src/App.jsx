@@ -213,6 +213,13 @@ function SwipeDeck({ topics, loading, error, onRetry }) {
   const [votedIds, setVotedIds] = useState(() => new Set()); // bu cihazın daha önce oyladığı konular
   const [showHistory, setShowHistory] = useState(false);
   const [myVotes, setMyVotes] = useState(null); // null = yüklenmedi
+  const [showHint, setShowHint] = useState(() => {
+    try { return !localStorage.getItem("reyy_hint_seen"); } catch (e) { return false; }
+  });
+  const dismissHint = () => {
+    setShowHint(false);
+    try { localStorage.setItem("reyy_hint_seen", "1"); } catch (e) {}
+  };
   const flying = useRef(false);
   const start = useRef({ x: 0, y: 0 });
   const voterId = useRef(getVoterId());
@@ -500,6 +507,18 @@ function SwipeDeck({ topics, loading, error, onRetry }) {
       onMouseMove={e => onMove(e.clientX, e.clientY)} onMouseUp={onEnd} onMouseLeave={onEnd}
       onTouchMove={e => { e.preventDefault(); onMove(e.touches[0].clientX, e.touches[0].clientY); }} onTouchEnd={onEnd}>
       {activeColor && <div style={{ ...S.glow, background: `radial-gradient(ellipse at ${swipeDir === "right" ? "80%" : swipeDir === "left" ? "20%" : "50%"} 50%, ${activeColor}22 0%, transparent 65%)` }} />}
+      {showHint && (
+        <div style={S.hintOverlay}>
+          <div style={S.hintBox}>
+            <div style={S.hintTitle}>🗳 Nasıl çalışır?</div>
+            <div style={{ ...S.hintRow, color: DIR.right.color }}>Sağa kaydır → <strong>Destekle</strong></div>
+            <div style={{ ...S.hintRow, color: DIR.left.color }}>Sola kaydır → <strong>Karşıyım</strong></div>
+            <div style={{ ...S.hintRow, color: "#9CA3AF" }}>Aşağı kaydır → <strong>Fikrim yok</strong></div>
+            <p style={S.hintNote}>Kartın altındaki kutularda iki tarafın gerekçesini bulabilirsin.</p>
+            <button style={S.hintBtn} onClick={dismissHint}>Anladım, başla →</button>
+          </div>
+        </div>
+      )}
       {filterBar}
       <div style={S.expertBar} onClick={() => setExpertOpen(o => !o)}>
         <div style={S.expertLabel}>
@@ -890,7 +909,7 @@ const S = {
 
   deckRoot: { display: "flex", flexDirection: "column", alignItems: "center", width: "100%", flex: 1, userSelect: "none", position: "relative" },
   filterBar: { display: "flex", gap: 6, overflowX: "auto", padding: "10px 14px", width: "100%", maxWidth: 500, boxSizing: "border-box", zIndex: 10, scrollbarWidth: "none", flexShrink: 0 },
-  chip: { flexShrink: 0, fontSize: 11, padding: "6px 13px", borderRadius: 20, border: "1px solid", cursor: "pointer", whiteSpace: "nowrap", letterSpacing: "0.04em", fontFamily: "inherit" },
+  chip: { flexShrink: 0, fontSize: 12, padding: "8px 14px", borderRadius: 20, border: "1px solid", cursor: "pointer", whiteSpace: "nowrap", letterSpacing: "0.04em", fontFamily: "inherit" },
   chipAllActive: { background: "rgba(37,99,235,0.9)", color: "#fff", borderColor: "#2563EB", fontWeight: 800 },
   chipInactive: { background: "rgba(255,255,255,0.04)", color: "#9CA3AF", borderColor: "rgba(255,255,255,0.12)", fontWeight: 700 },
   glow: { position: "fixed", inset: 0, pointerEvents: "none", transition: "background 0.15s", zIndex: 0 },
@@ -898,20 +917,20 @@ const S = {
   expertLabel: { display: "flex", alignItems: "center", gap: 6, fontSize: 11, letterSpacing: "0.09em", color: "#6EB5D8", fontWeight: 700 },
   expertIcon: { fontSize: 14 },
   expertAuthor: { color: "#8DCCE8", fontWeight: 400 },
-  expertBody: { fontSize: 13, color: "#9CC8E0", marginTop: 10, lineHeight: 1.65, paddingBottom: 4 },
+  expertBody: { fontSize: 13.5, color: "#9CC8E0", marginTop: 10, lineHeight: 1.65, paddingBottom: 4 },
   arena: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "16px 0", position: "relative", zIndex: 1 },
   cardGroup: { display: "flex", flexDirection: "column", alignItems: "center", width: 300 },
   viewsRow: { display: "flex", gap: 8, width: "100%", marginTop: 12 },
   viewBox: { flex: 1, background: "#0D1520", border: "1px solid", borderRadius: 14, padding: "12px 12px 14px" },
-  viewTag: { fontSize: 10, fontWeight: 800, letterSpacing: "0.06em", marginBottom: 8 },
-  viewText: { fontSize: 12, color: "#C2CAD6", lineHeight: 1.55, margin: 0 },
+  viewTag: { fontSize: 11, fontWeight: 800, letterSpacing: "0.06em", marginBottom: 8 },
+  viewText: { fontSize: 13.5, color: "#CBD5E1", lineHeight: 1.55, margin: 0 },
   card: { width: 300, minHeight: 300, background: "linear-gradient(160deg, #111827 0%, #0D1520 100%)", border: "1px solid", borderRadius: 22, padding: "26px 22px 20px", position: "relative", zIndex: 2, flexShrink: 0, touchAction: "none", boxSizing: "border-box" },
   badge: { position: "absolute", border: "2px solid", borderRadius: 8, padding: "4px 11px", fontSize: 12, fontWeight: 800, letterSpacing: "0.06em", pointerEvents: "none" },
   categoryTag: { display: "inline-block", fontSize: 10, letterSpacing: "0.12em", fontWeight: 800, marginBottom: 14, padding: "4px 10px", borderRadius: 20 },
-  cardTitle: { fontSize: 18, fontWeight: 700, lineHeight: 1.38, color: "#F9FAFB", margin: "0 0 14px" },
-  cardBody: { fontSize: 13, lineHeight: 1.7, color: "#9CA3AF", margin: "0 0 24px" },
-  hints: { display: "flex", justifyContent: "space-between", fontSize: 10, opacity: 0.65, letterSpacing: "0.03em" },
-  sourceLink: { display: "inline-block", fontSize: 11, color: "#6EB5D8", textDecoration: "none", marginBottom: 18, opacity: 0.85, cursor: "pointer" },
+  cardTitle: { fontSize: 19, fontWeight: 700, lineHeight: 1.38, color: "#F9FAFB", margin: "0 0 14px" },
+  cardBody: { fontSize: 14, lineHeight: 1.7, color: "#A7B1C2", margin: "0 0 24px" },
+  hints: { display: "flex", justifyContent: "space-between", fontSize: 11.5, opacity: 0.85, letterSpacing: "0.03em" },
+  sourceLink: { display: "inline-block", fontSize: 12, color: "#6EB5D8", textDecoration: "none", marginBottom: 18, opacity: 0.85, cursor: "pointer" },
   panel: { width: 104, background: "#0D1520", border: "1px solid", borderRadius: 16, padding: "14px 11px", flexShrink: 0, cursor: "pointer", transition: "opacity 0.12s, border-color 0.12s", boxSizing: "border-box" },
   panelLeft: { marginRight: -12, zIndex: 1 },
   panelRight: { marginLeft: -12, zIndex: 1 },
@@ -921,7 +940,7 @@ const S = {
   footer: { width: "100%", maxWidth: 500, padding: "10px 24px 22px", zIndex: 10, boxSizing: "border-box" },
   bar: { height: 3, background: "rgba(255,255,255,0.07)", borderRadius: 2, marginBottom: 8 },
   fill: { height: "100%", background: "linear-gradient(90deg, #2563EB, #6EB5D8)", borderRadius: 2, transition: "width 0.3s" },
-  counter: { textAlign: "center", fontSize: 11, color: "#374151", letterSpacing: "0.08em" },
+  counter: { textAlign: "center", fontSize: 11, color: "#6B7280", letterSpacing: "0.08em" },
   resultWrap: { background: "#0D1520", borderRadius: 22, padding: "36px 28px", width: 310, marginTop: 60, border: "1px solid rgba(255,255,255,0.07)" },
   resultEmoji: { fontSize: 44, textAlign: "center", marginBottom: 14 },
   resultHeading: { fontSize: 20, fontWeight: 700, color: "#F9FAFB", textAlign: "center", margin: "0 0 24px" },
@@ -937,12 +956,19 @@ const S = {
   histRow: { fontSize: 12, marginBottom: 8 },
   histPcts: { display: "flex", gap: 12, alignItems: "center", fontSize: 11.5, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 8 },
 
+  hintOverlay: { position: "fixed", inset: 0, background: "rgba(4,9,18,0.82)", backdropFilter: "blur(3px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 500, padding: 24 },
+  hintBox: { background: "linear-gradient(160deg, #111827 0%, #0D1520 100%)", border: "1px solid rgba(110,181,216,0.25)", borderRadius: 18, padding: "26px 24px", maxWidth: 320, width: "100%", textAlign: "center", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" },
+  hintTitle: { color: "#F5F8FF", fontSize: 19, fontWeight: 800, marginBottom: 18 },
+  hintRow: { fontSize: 15, marginBottom: 12, letterSpacing: "0.01em" },
+  hintNote: { color: "#8893A8", fontSize: 12.5, lineHeight: 1.6, margin: "14px 0 18px" },
+  hintBtn: { width: "100%", padding: "13px", background: "linear-gradient(135deg, #1E3A5F, #2563EB)", color: "#F0EDE8", border: "none", borderRadius: 11, fontSize: 14.5, fontWeight: 700, cursor: "pointer", letterSpacing: "0.03em", fontFamily: "inherit" },
+
   voteResultLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "#6B7280", textTransform: "uppercase", marginBottom: 16 },
   voteRowTop: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12.5, marginBottom: 6 },
   youTag: { fontSize: 9, color: "#8DBBF5", letterSpacing: "0.08em" },
   voteBarBg: { height: 8, background: "rgba(255,255,255,0.06)", borderRadius: 5, overflow: "hidden" },
   voteBarFill: { height: "100%", borderRadius: 5, transition: "width 0.6s cubic-bezier(0.22,1,0.36,1)" },
-  voteTotal: { fontSize: 11, color: "#4B5563", textAlign: "center", marginTop: 16, letterSpacing: "0.04em" },
+  voteTotal: { fontSize: 12, color: "#8893A8", textAlign: "center", marginTop: 16, letterSpacing: "0.04em" },
   continueBtn: { marginTop: 18, width: "100%", padding: "13px", background: "linear-gradient(135deg, #1E3A5F, #2563EB)", color: "#F0EDE8", border: "none", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: "0.05em" },
   voteActions: { display: "flex", gap: 9, marginTop: 18 },
   shareBtn: { flexShrink: 0, padding: "13px 18px", background: "transparent", color: "#9FD0E8", border: "1px solid rgba(110,181,216,0.35)", borderRadius: 11, fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: "0.03em", fontFamily: "inherit" },

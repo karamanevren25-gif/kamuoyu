@@ -5,7 +5,7 @@
 const SUPABASE_URL = "https://mzfnafgmlutucxnpuuzo.supabase.co";
 const CATEGORIES = ["HUKUK", "SİYASET", "EKONOMİ", "EĞİTİM", "SAĞLIK", "DIŞ POLİTİKA", "ÇEVRE", "TEKNOLOJİ", "MAGAZİN", "SPOR", "DİĞER"];
 const DEFAULT_FEED = "https://news.google.com/rss?hl=tr&gl=TR&ceid=TR:tr";
-const MAX_PER_RUN = 3; // her çalışmada en fazla kaç haber işlensin (zaman/maliyet sınırı)
+const MAX_PER_RUN = 6; // her çalışmada en fazla kaç haber işlensin (zaman/maliyet sınırı)
 
 function decodeEntities(s) {
   return s
